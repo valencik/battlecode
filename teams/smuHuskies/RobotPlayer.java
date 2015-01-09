@@ -100,9 +100,52 @@ public class RobotPlayer {
 
             return dirs;
         }
+        
+        public Direction[] getDirectionsAway(MapLocation dest) {
+        	Direction toDest = rc.getLocation().directionTo(dest).opposite();
+        	Direction[] dirs = {toDest,
+        			toDest.rotateLeft().rotateLeft().rotateLeft(), toDest.rotateRight().rotateRight().rotateRight(),
+        			toDest.rotateLeft(), toDest.rotateRight(),
+        			toDest.rotateLeft().rotateLeft(), toDest.rotateRight().rotateRight()
+        			};
+
+        	return dirs;
+        }
 
         public Direction getMoveDir(MapLocation dest) {
             Direction[] dirs = getDirectionsToward(dest);
+            for (Direction d : dirs) {
+                if (rc.canMove(d)) {
+                    return d;
+                }
+            }
+            return null;
+        }
+
+        public Direction getMoveDirAway(MapLocation dest) {
+            Direction[] dirs = getDirectionsAway(dest);
+            for (Direction d : dirs) {
+                if (rc.canMove(d)) {
+                    return d;
+                }
+            }
+            return null;
+        }
+
+        public Direction getMoveDirRand(MapLocation dest) {
+        	//TODO return a random direction
+        	Direction[] dirs = getDirectionsToward(dest);
+            for (Direction d : dirs) {
+                if (rc.canMove(d)) {
+                    return d;
+                }
+            }
+            return null;
+        }
+
+        public Direction getMoveDirAwayRand(MapLocation dest) {
+        	//TODO return a random direction
+            Direction[] dirs = getDirectionsAway(dest);
             for (Direction d : dirs) {
                 if (rc.canMove(d)) {
                     return d;
@@ -157,7 +200,64 @@ public class RobotPlayer {
 
             rc.attackLocation(toAttack);
         }
+        
+        public void attackLeastHealthEnemyInRange() throws GameActionException {
+            RobotInfo[] enemies = getEnemiesInAttackingRange();
 
+            if (enemies.length > 0) {
+                //attack!
+                if (rc.isWeaponReady()) {
+                    attackLeastHealthEnemy(enemies);
+                }
+            }
+        }
+        
+        public void moveToRallyPoint() throws GameActionException {
+            if (rc.isCoreReady()) {
+                int rallyX = rc.readBroadcast(0);
+                int rallyY = rc.readBroadcast(1);
+                MapLocation rallyPoint = new MapLocation(rallyX, rallyY);
+
+                Direction newDir = getMoveDir(rallyPoint);
+
+                if (newDir != null) {
+                    rc.move(newDir);
+                }
+            }
+    		
+    	}
+
+        public void transferSupplies() throws GameActionException {
+        	RobotInfo[] nearbyAllies = rc.senseNearbyRobots(rc.getLocation(),GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED,rc.getTeam());
+        	double lowestSupply = rc.getSupplyLevel();
+        	double transferAmount = 0;
+        	MapLocation suppliesToThisLocation = null;
+        	for(RobotInfo ri:nearbyAllies){
+        		if(ri.supplyLevel<lowestSupply){
+        			lowestSupply = ri.supplyLevel;
+        			transferAmount = (rc.getSupplyLevel()-ri.supplyLevel)/2;
+        			suppliesToThisLocation = ri.location;
+        		}
+        	}
+        	if(suppliesToThisLocation!=null){
+        		rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
+        	}
+        }
+        
+    	public void spawnUnit(RobotType type) throws GameActionException {
+    		Direction randomDir = getSpawnDirection(type);
+    		if(rc.isCoreReady()&& randomDir != null){
+    			rc.spawn(randomDir, type);
+    		}
+    	}
+    	
+    	public void buildUnit(RobotType type) throws GameActionException {
+    		Direction randomDir = getBuildDirection(type);
+    		if(rc.isCoreReady()&& randomDir != null){
+    			rc.build(randomDir, type);
+    		}
+    	}
+    	
         public void beginningOfTurn() {
             if (rc.senseEnemyHQLocation() != null) {
                 this.theirHQ = rc.senseEnemyHQLocation();
