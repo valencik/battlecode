@@ -10,6 +10,7 @@ bin
 build.xml
 doc
 lib
+match.rms
 
 lanes.xml
 noeffort.xml
