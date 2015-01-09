@@ -1,9 +1,58 @@
-package battlebot;
+package smuHuskies;
 
 import battlecode.common.*;
+
 import java.util.*;
 
 public class RobotPlayer {
+	
+	//--Begin Parameters
+	public static int roundToBuildAEROSPACELAB = 100;
+	public static int roundToBuildBARRACKS = 500;
+	public static int roundToBuildBASHER = 1500;
+	public static int roundToBuildBEAVER = 100;
+	public static int roundToBuildCOMMANDER = 100;
+	public static int roundToBuildCOMPUTER = 100;
+	public static int roundToBuildDRONE = 100;
+	public static int roundToBuildHANDWASHSTATION = 100;
+	public static int roundToBuildHELIPAD = 100;
+	public static int roundToBuildLAUNCHER = 100;
+	public static int roundToBuildMINER = 1;
+	public static int roundToBuildMINERFACTORY = 100;
+	public static int roundToBuildMISSILE = 100;
+	public static int roundToBuildSOLDIER = 50;
+	public static int roundToBuildSUPPLYDEPOT = 100;
+	public static int roundToBuildTANK = 100;
+	public static int roundToBuildTANKFACTORY = 100;
+	public static int roundToBuildTECHNOLOGYINSTITUTE = 100;
+	public static int roundToBuildTRAININGFIELD = 100;
+
+	public static int desiredNumOfAEROSPACELAB = 8;
+	public static int desiredNumOfBARRACKS = 8;
+	public static int desiredNumOfBASHER = 10;
+	public static int desiredNumOfBEAVER = 10;
+	public static int desiredNumOfCOMMANDER = 8;
+	public static int desiredNumOfCOMPUTER = 8;
+	public static int desiredNumOfDRONE = 8;
+	public static int desiredNumOfHANDWASHSTATION = 8;
+	public static int desiredNumOfHELIPAD = 8;
+	public static int desiredNumOfLAUNCHER = 8;
+	public static int desiredNumOfMINER = 15;
+	public static int desiredNumOfMINERFACTORY = 8;
+	public static int desiredNumOfMISSILE = 8;
+	public static int desiredNumOfSOLDIER = 20;
+	public static int desiredNumOfSUPPLYDEPOT = 8;
+	public static int desiredNumOfTANK = 8;
+	public static int desiredNumOfTANKFACTORY = 8;
+	public static int desiredNumOfTECHNOLOGYINSTITUTE = 8;
+	public static int desiredNumOfTRAININGFIELD = 8;
+
+	public static int roundToLaunchAttack = 600;
+	
+	public static int currentOreGoal = 100;
+	//--End Parameters
+	
+
 	public static void run(RobotController rc) {
         BaseBot myself;
 
