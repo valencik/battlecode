@@ -254,9 +254,14 @@ public class RobotPlayer {
 			case BASHER:
 			    break;
 			case BEAVER:
-                Direction newDir = getMoveDirAway(this.theirHQ);
+				Direction newDir = null;
+                if (getDistanceSquared(this.myHQ) < 50){
+                	newDir = getMoveDirAway(this.myHQ);	
+                } else {
+                	newDir = getMoveDirAway(this.theirHQ);
+                }
 
-                if (newDir != null) {
+				if (newDir != null) {
                     rc.move(newDir);
                 }
 			    break;
@@ -376,18 +381,18 @@ public class RobotPlayer {
         	
         	rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
             if (rc.isCoreReady()) {
-                if (rc.getTeamOre() < 100) {
+                if (Clock.getRoundNum() > roundToBuildMINERFACTORY && rc.getTeamOre() > 500) {
+                    buildUnit(RobotType.MINERFACTORY);
+                } else if (Clock.getRoundNum() > roundToBuildBARRACKS && rc.getTeamOre() > 300) {
+                    buildUnit(RobotType.BARRACKS);
+                } else {
                     //mine
-                    if (rc.senseOre(rc.getLocation()) > 20) {
+                    if (rc.senseOre(rc.getLocation()) > 1) {
                         rc.mine();
                     }
                     else {
                     	moveRealGood();
                     }
-                } else if (Clock.getRoundNum() < roundToBuildBARRACKS) {
-                    buildUnit(RobotType.MINERFACTORY);
-                } else {
-                	buildUnit(RobotType.BARRACKS);
                 }
             }
             transferSupplies();
