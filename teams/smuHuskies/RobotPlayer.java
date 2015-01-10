@@ -98,6 +98,15 @@ public class RobotPlayer {
             this.theirTeam = this.myTeam.opponent();
         }
 
+        public int getDistanceSquared(MapLocation A, MapLocation B){
+        	return (A.x - B.x)*(A.x - B.x) + (A.y - B.y)*(A.y - B.y);
+        }
+        
+        public int getDistanceSquared(MapLocation A){
+			MapLocation B = rc.getLocation();
+        	return (A.x - B.x)*(A.x - B.x) + (A.y - B.y)*(A.y - B.y);
+        }
+        
         public Direction[] getDirectionsToward(MapLocation dest) {
             Direction toDest = rc.getLocation().directionTo(dest);
             Direction[] dirs = {toDest,
@@ -236,6 +245,42 @@ public class RobotPlayer {
             }
     		
     	}
+        
+        public void moveRealGood() throws GameActionException {
+        	int currentRound = Clock.getRoundNum();
+			RobotType currentRobotType = rc.getType();
+			
+			switch(currentRobotType){
+			case BASHER:
+			    break;
+			case BEAVER:
+                Direction newDir = getMoveDirAway(this.theirHQ);
+
+                if (newDir != null) {
+                    rc.move(newDir);
+                }
+			    break;
+			case COMMANDER:
+			    break;
+			case COMPUTER:
+			    break;
+			case DRONE:
+			    break;
+			case LAUNCHER:
+			    break;
+			case MINER:
+			    break;
+			case MISSILE:
+			    break;
+			case SOLDIER:
+			    break;
+			case TANK:
+			    break;
+			default:
+				//error
+			} //Done RobotType specific actions.
+
+        }
 
         public void transferSupplies() throws GameActionException {
         	RobotInfo[] nearbyAllies = rc.senseNearbyRobots(rc.getLocation(),GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED,rc.getTeam());
@@ -328,7 +373,8 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-
+        	
+        	rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
             if (rc.isCoreReady()) {
                 if (rc.getTeamOre() < 100) {
                     //mine
@@ -336,11 +382,7 @@ public class RobotPlayer {
                         rc.mine();
                     }
                     else {
-                        Direction newDir = getMoveDirAway(this.theirHQ);
-
-                        if (newDir != null) {
-                            rc.move(newDir);
-                        }
+                    	moveRealGood();
                     }
                 } else if (Clock.getRoundNum() < roundToBuildBARRACKS) {
                     buildUnit(RobotType.MINERFACTORY);
