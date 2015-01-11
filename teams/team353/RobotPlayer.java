@@ -376,14 +376,6 @@ public class RobotPlayer {
 
         }
 
-        //TODO decrement and delete
-        public void spawnUnit(RobotType type) throws GameActionException {
-            Direction randomDir = getSpawnDir(type);
-            if(rc.isCoreReady()&& randomDir != null){
-                rc.spawn(randomDir, type);
-            }
-        }
-
         //Spawns unit based on calling type. Performs all checks.
         public void spawnUnit() throws GameActionException {
             if (rc.isCoreReady()){
@@ -908,7 +900,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            spawnUnit(RobotType.BEAVER);
+            spawnUnit();
 
             //Broadcast rallyPoint
             MapLocation rallyPoint;
