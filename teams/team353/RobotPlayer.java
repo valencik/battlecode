@@ -269,6 +269,7 @@ public class RobotPlayer {
             return enemies;
         }
 
+        //TODO has defend() replaced this?
         public void attackLeastHealthEnemy(RobotInfo[] enemies) throws GameActionException {
             if (enemies.length == 0) {
                 return;
@@ -286,6 +287,7 @@ public class RobotPlayer {
             rc.attackLocation(toAttack);
         }
         
+        //TODO has defend() replaced this?
         public void attackLeastHealthEnemyInRange() throws GameActionException {
             RobotInfo[] enemies = getEnemiesInAttackingRange();
 
@@ -312,10 +314,15 @@ public class RobotPlayer {
     		
     	}
         
+        //TODO implement safety checks!
         public void moveRealGood() throws GameActionException {
+			//  The switch statement should result in an array of directions that make sense
+			//for the RobotType. Then we can go through the array and determine if the
+			//location is safe, or off an edge.
+        	
         	int currentRound = Clock.getRoundNum();
 			RobotType currentRobotType = rc.getType();
-			
+		
 			switch(currentRobotType){
 			case BASHER:
 			    break;
@@ -353,6 +360,7 @@ public class RobotPlayer {
 
         }
 
+        //TODO establish a chain and supply depots
         public void transferSupplies() throws GameActionException {
         	RobotInfo[] nearbyAllies = rc.senseNearbyRobots(rc.getLocation(),GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED,rc.getTeam());
         	double lowestSupply = rc.getSupplyLevel();
@@ -370,6 +378,7 @@ public class RobotPlayer {
         	}
         }
         
+        //TODO decrement and delete
     	public void spawnUnit(RobotType type) throws GameActionException {
     		Direction randomDir = getSpawnDir(type);
     		if(rc.isCoreReady()&& randomDir != null){
@@ -453,6 +462,7 @@ public class RobotPlayer {
             } //isCoreReady
     	}
     	
+    	//TODO copy the work done on spawnUnit()
     	public void buildUnit(RobotType type) throws GameActionException {
     		Direction randomDir = getBuildDir(type);
     		if(rc.isCoreReady()&& randomDir != null){
@@ -460,6 +470,7 @@ public class RobotPlayer {
     		}
     	}
     	
+    	//TODO find a way to deal with deaths.
     	public void incrementCount(RobotType type) throws GameActionException {
     		switch(type){
         	case AEROSPACELAB:
