@@ -96,8 +96,8 @@ public class RobotPlayer {
 	public static int NUM_HANDWASH_STATIONS_BUILT = 0;
 	
 	// Defence
-	public static int NUM_TOWER_PROTECTORS = 10;
-	public static int NUM_HOLE_PROTECTORS = 2;
+	public static int NUM_TOWER_PROTECTORS = 4;
+	public static int NUM_HOLE_PROTECTORS = 3;
 	public static int PROTECT_OTHERS_RANGE = 10;
 	
 	// Idle States
@@ -320,6 +320,14 @@ public class RobotPlayer {
                 }
             }
 
+        }
+        
+        //Returns the current rally point MapLocation
+        public MapLocation getRallyPoint() throws GameActionException {            
+            int rallyX = rc.readBroadcast(0);
+            int rallyY = rc.readBroadcast(1);
+            MapLocation rallyPoint = new MapLocation(rallyX, rallyY);
+            return rallyPoint;
         }
 
         //TODO implement safety checks!
@@ -704,11 +712,17 @@ public class RobotPlayer {
     				// B2, Protect Towers
     				// TODO: Compute in advance at HQ, check Broadcasts for tower that needs units
     				MapLocation[] myTowers = rc.senseTowerLocations();
-    				MapLocation closestTower = myTowers[0];
+    				MapLocation closestTower = null;
+                    try {
+                        closestTower = getRallyPoint();
+                    } catch (GameActionException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
     				int closestDist = 999999;
     				for (MapLocation tower : myTowers) {
     					RobotInfo[] nearbyRobots = getTeammatesNearTower(tower);
-    					if (nearbyRobots.length < NUM_TOWER_PROTECTORS) {
+    					if (nearbyRobots.length < NUM_TOWER_PROTECTORS) { //tower underprotected
     						int dist = tower.distanceSquaredTo(theirHQ);
     						if (dist < closestDist) {
     							closestDist = dist;
@@ -717,11 +731,13 @@ public class RobotPlayer {
     					}
     				}
     				// TODO: End compute
-    				if (!closestTower.equals(defenseRallyPoint)) {
-						if (closestTower.distanceSquaredTo(closestTower) > (RobotType.TOWER.attackRadiusSquared)) {
-							goToLocation(closestTower);
-						}
-    				}
+    				goToLocation(closestTower);
+//    				if (!closestTower.equals(defenseRallyPoint)) {
+//						if (closestTower.distanceSquaredTo(closestTower) > (RobotType.TOWER.attackRadiusSquared)) {
+//							goToLocation(closestTower);
+//						}
+//    				}
+    				//System.out.println("B2: Protect Towers.");
     				return true;
     			}
 				// B3, Protect Other Buildings
