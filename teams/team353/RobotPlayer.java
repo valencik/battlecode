@@ -10,7 +10,7 @@ public class RobotPlayer {
 	public static int roundToBuildAEROSPACELAB = 100;
 	public static int roundToBuildBARRACKS = 500;
 	public static int roundToBuildBASHER = 1500;
-	public static int roundToBuildBEAVER = 100;
+	public static int roundToBuildBEAVER = 0;
 	public static int roundToBuildCOMMANDER = 100;
 	public static int roundToBuildCOMPUTER = 100;
 	public static int roundToBuildDRONE = 100;
@@ -29,7 +29,7 @@ public class RobotPlayer {
 
 	public static int desiredNumOfAEROSPACELAB = 8;
 	public static int desiredNumOfBARRACKS = 8;
-	public static int desiredNumOfBASHER = 10;
+	public static int desiredNumOfBASHER = 50;
 	public static int desiredNumOfBEAVER = 10;
 	public static int desiredNumOfCOMMANDER = 8;
 	public static int desiredNumOfCOMPUTER = 8;
@@ -37,15 +37,55 @@ public class RobotPlayer {
 	public static int desiredNumOfHANDWASHSTATION = 8;
 	public static int desiredNumOfHELIPAD = 8;
 	public static int desiredNumOfLAUNCHER = 8;
-	public static int desiredNumOfMINER = 15;
+	public static int desiredNumOfMINER = 40;
 	public static int desiredNumOfMINERFACTORY = 8;
 	public static int desiredNumOfMISSILE = 8;
-	public static int desiredNumOfSOLDIER = 20;
+	public static int desiredNumOfSOLDIER = 200;
 	public static int desiredNumOfSUPPLYDEPOT = 8;
 	public static int desiredNumOfTANK = 8;
 	public static int desiredNumOfTANKFACTORY = 8;
 	public static int desiredNumOfTECHNOLOGYINSTITUTE = 8;
 	public static int desiredNumOfTRAININGFIELD = 8;
+
+	public static int numAEROSPACELAB;
+	public static int numBARRACKS;
+	public static int numBASHER;
+	public static int numBEAVER;
+	public static int numCOMMANDER;
+	public static int numCOMPUTER;
+	public static int numDRONE;
+	public static int numHANDWASHSTATION;
+	public static int numHELIPAD;
+	public static int numLAUNCHER;
+	public static int numMINER;
+	public static int numMINERFACTORY;
+	public static int numMISSILE;
+	public static int numSOLDIER;
+	public static int numSUPPLYDEPOT;
+	public static int numTANK;
+	public static int numTANKFACTORY;
+	public static int numTECHNOLOGYINSTITUTE;
+	public static int numTRAININGFIELD;
+
+	public static final int freqNumAEROSPACELAB = 300;
+	public static final int freqNumBARRACKS = 301;
+	public static final int freqNumBASHER = 302;
+	public static final int freqNumBEAVER = 303;
+	public static final int freqNumCOMMANDER = 304;
+	public static final int freqNumCOMPUTER = 305;
+	public static final int freqNumDRONE = 306;
+	public static final int freqNumHANDWASHSTATION = 307;
+	public static final int freqNumHELIPAD = 308;
+	public static final int freqNumLAUNCHER = 309;
+	public static final int freqNumMINER = 310;
+	public static final int freqNumMINERFACTORY = 311;
+	public static final int freqNumMISSILE = 312;
+	public static final int freqNumSOLDIER = 313;
+	public static final int freqNumSUPPLYDEPOT = 314;
+	public static final int freqNumTANK = 315;
+	public static final int freqNumTANKFACTORY = 316;
+	public static final int freqNumTECHNOLOGYINSTITUTE = 317;
+	public static final int freqNumTRAININGFIELD = 318;
 
 	public static int roundToLaunchAttack = 1500;
 	
@@ -132,13 +172,11 @@ public class RobotPlayer {
         
         public Direction[] getDirectionsAway(MapLocation dest) {
         	Direction toDest = rc.getLocation().directionTo(dest).opposite();
-        	Direction[] dirs = {toDest,
-        			toDest.rotateLeft().rotateLeft().rotateLeft(), toDest.rotateRight().rotateRight().rotateRight(),
-        			toDest.rotateLeft(), toDest.rotateRight(),
-        			toDest.rotateLeft().rotateLeft(), toDest.rotateRight().rotateRight()
-        			};
+            Direction[] dirs = {toDest,
+		    		toDest.rotateLeft(), toDest.rotateRight(),
+				toDest.rotateLeft().rotateLeft(), toDest.rotateRight().rotateRight()};
 
-        	return dirs;
+            return dirs;
         }
 
         public Direction getMoveDir(MapLocation dest) {
@@ -183,8 +221,15 @@ public class RobotPlayer {
             return null;
         }
 
-        public Direction getSpawnDirection(RobotType type) {
+        //Will return a single direction for spawning. (Uses getDirectionsToward())
+        public Direction getSpawnDir(RobotType type) {
             Direction[] dirs = getDirectionsToward(this.theirHQ);
+            for (Direction d : dirs) {
+                if (rc.canSpawn(d, type)) {
+                    return d;
+                }
+            }
+            dirs = getDirectionsToward(this.myHQ);
             for (Direction d : dirs) {
                 if (rc.canSpawn(d, type)) {
                     return d;
@@ -195,8 +240,15 @@ public class RobotPlayer {
             return null;
         }
 
-        public Direction getBuildDirection(RobotType type) {
+        //Will return a single direction for building. (Uses getDirectionsToward())
+        public Direction getBuildDir(RobotType type) {
             Direction[] dirs = getDirectionsToward(this.theirHQ);
+            for (Direction d : dirs) {
+                if (rc.canBuild(d, type)) {
+                    return d;
+                }
+            }
+            dirs = getDirectionsToward(this.myHQ);
             for (Direction d : dirs) {
                 if (rc.canBuild(d, type)) {
                     return d;
@@ -319,16 +371,157 @@ public class RobotPlayer {
         }
         
     	public void spawnUnit(RobotType type) throws GameActionException {
-    		Direction randomDir = getSpawnDirection(type);
+    		Direction randomDir = getSpawnDir(type);
     		if(rc.isCoreReady()&& randomDir != null){
     			rc.spawn(randomDir, type);
     		}
     	}
     	
+    	//Spawns unit based on calling type. Performs all checks.
+    	public void spawnUnit() throws GameActionException {
+            if (rc.isCoreReady()){
+    		RobotType myType = rc.getType();
+    		RobotType spawnType;
+    		int round = Clock.getRoundNum();
+    		double ore = rc.getTeamOre();
+    		
+			switch(myType){
+
+			case BARRACKS:				    
+			    if (round > roundToBuildSOLDIER && rc.readBroadcast(freqNumSOLDIER) < desiredNumOfSOLDIER && ore > 100){
+			    	spawnType = RobotType.SOLDIER;
+			    	break;
+			    } else if (round > roundToBuildBASHER && rc.readBroadcast(freqNumBASHER) < desiredNumOfBASHER && ore > 100){
+			    	spawnType = RobotType.BASHER;
+			    	break;
+			    }
+			    return;
+			case HQ:
+			    if (round > roundToBuildBEAVER && rc.readBroadcast(freqNumBEAVER) < desiredNumOfBEAVER && ore > 100){
+			    	spawnType = RobotType.BEAVER;
+			    	break;
+			    }
+			    return;
+			case HELIPAD:
+			    if (round > roundToBuildDRONE && rc.readBroadcast(freqNumDRONE) < desiredNumOfDRONE && ore > 100){
+			    	spawnType = RobotType.DRONE;
+			    	break;
+			    }
+			    return;
+			case AEROSPACELAB:
+			    if (round > roundToBuildLAUNCHER && rc.readBroadcast(freqNumLAUNCHER) < desiredNumOfLAUNCHER && ore > 100){
+			    	spawnType = RobotType.LAUNCHER;
+			    	break;
+			    }
+			    return;
+			case MINERFACTORY:
+			    if (round > roundToBuildMINER && rc.readBroadcast(freqNumMINER) < desiredNumOfMINER && ore > 100){
+			    	spawnType = RobotType.MINER;
+			    	break;
+			    }
+			    return;
+			case TANKFACTORY:
+			    if (round > roundToBuildTANK && rc.readBroadcast(freqNumTANK) < desiredNumOfTANK && ore > 100){
+			    	spawnType = RobotType.TANK;
+			    	break;
+			    }
+			    return;
+			case TECHNOLOGYINSTITUTE:
+			    if (round > roundToBuildCOMPUTER && rc.readBroadcast(freqNumCOMPUTER) < desiredNumOfCOMPUTER && ore > 100){
+			    	spawnType = RobotType.COMPUTER;
+			    	break;
+			    }
+			    return;
+			case TRAININGFIELD:
+			    if (round > roundToBuildCOMMANDER && rc.readBroadcast(freqNumCOMMANDER) < desiredNumOfCOMMANDER && ore > 100){
+			    	spawnType = RobotType.COMMANDER;
+			    	break;
+			    }
+			    return;
+
+			default:
+				System.out.println("ERRROR in spawnUnit()!");
+				return;
+			}
+
+			//Get a direction and then actually spawn the unit.
+    		Direction randomDir = getSpawnDir(spawnType);
+    		if(rc.isCoreReady()&& randomDir != null){
+    			rc.spawn(randomDir, spawnType);
+    			incrementCount(spawnType); 
+    		}
+            } //isCoreReady
+    	}
+    	
     	public void buildUnit(RobotType type) throws GameActionException {
-    		Direction randomDir = getBuildDirection(type);
+    		Direction randomDir = getBuildDir(type);
     		if(rc.isCoreReady()&& randomDir != null){
     			rc.build(randomDir, type);
+    		}
+    	}
+    	
+    	public void incrementCount(RobotType type) throws GameActionException {
+    		switch(type){
+        	case AEROSPACELAB:
+    		    rc.broadcast(freqNumAEROSPACELAB, rc.readBroadcast(freqNumAEROSPACELAB)+1);
+    		    break;
+    		case BARRACKS:
+    		    rc.broadcast(freqNumBARRACKS, rc.readBroadcast(freqNumBARRACKS)+1);
+    		    break;
+    		case BASHER:
+    		    rc.broadcast(freqNumBASHER, rc.readBroadcast(freqNumBASHER)+1);
+    		    break;
+    		case BEAVER:
+    		    rc.broadcast(freqNumBEAVER, rc.readBroadcast(freqNumBEAVER)+1);
+    		    break;
+    		case COMMANDER:
+    		    rc.broadcast(freqNumCOMMANDER, rc.readBroadcast(freqNumCOMMANDER)+1);
+    		    break;
+    		case COMPUTER:
+    		    rc.broadcast(freqNumCOMPUTER, rc.readBroadcast(freqNumCOMPUTER)+1);
+    		    break;
+    		case DRONE:
+    		    rc.broadcast(freqNumDRONE, rc.readBroadcast(freqNumDRONE)+1);
+    		    break;
+    		case HANDWASHSTATION:
+    		    rc.broadcast(freqNumHANDWASHSTATION, rc.readBroadcast(freqNumHANDWASHSTATION)+1);
+    		    break;
+    		case HELIPAD:
+    		    rc.broadcast(freqNumHELIPAD, rc.readBroadcast(freqNumHELIPAD)+1);
+    		    break;
+    		case LAUNCHER:
+    		    rc.broadcast(freqNumLAUNCHER, rc.readBroadcast(freqNumLAUNCHER)+1);
+    		    break;
+    		case MINER:
+    		    rc.broadcast(freqNumMINER, rc.readBroadcast(freqNumMINER)+1);
+    		    break;
+    		case MINERFACTORY:
+    		    rc.broadcast(freqNumMINERFACTORY, rc.readBroadcast(freqNumMINERFACTORY)+1);
+    		    break;
+    		case MISSILE:
+    		    rc.broadcast(freqNumMISSILE, rc.readBroadcast(freqNumMISSILE)+1);
+    		    break;
+    		case SOLDIER:
+    		    rc.broadcast(freqNumSOLDIER, rc.readBroadcast(freqNumSOLDIER)+1);
+    		    break;
+    		case SUPPLYDEPOT:
+    		    rc.broadcast(freqNumSUPPLYDEPOT, rc.readBroadcast(freqNumSUPPLYDEPOT)+1);
+    		    break;
+    		case TANK:
+    		    rc.broadcast(freqNumTANK, rc.readBroadcast(freqNumTANK)+1);
+    		    break;
+    		case TANKFACTORY:
+    		    rc.broadcast(freqNumTANKFACTORY, rc.readBroadcast(freqNumTANKFACTORY)+1);
+    		    break;
+    		case TECHNOLOGYINSTITUTE:
+    		    rc.broadcast(freqNumTECHNOLOGYINSTITUTE, rc.readBroadcast(freqNumTECHNOLOGYINSTITUTE)+1);
+    		    break;
+    		case TRAININGFIELD:
+    		    rc.broadcast(freqNumTRAININGFIELD, rc.readBroadcast(freqNumTRAININGFIELD)+1);
+    		    break;
+    		default:
+    			System.out.println("ERRROR!");
+    			return;
     		}
     	}
     	
@@ -626,12 +819,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            int numBeavers = rc.readBroadcast(2);
-
-            if (rc.isCoreReady() && rc.getTeamOre() > 100 && numBeavers < desiredNumOfBEAVER) {
-                spawnUnit(RobotType.BEAVER);
-            	rc.broadcast(2, numBeavers + 1);
-            }
+            spawnUnit();
             
             //Broadcast rallyPoint
             MapLocation rallyPoint;
@@ -659,6 +847,7 @@ public class RobotPlayer {
         public void execute() throws GameActionException {
         	
         	rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
+            defend();
             if (rc.isCoreReady()) {
                 if (Clock.getRoundNum() > roundToBuildMINERFACTORY && rc.getTeamOre() > 500) {
                     buildUnit(RobotType.MINERFACTORY);
@@ -676,7 +865,7 @@ public class RobotPlayer {
             }
             transferSupplies();
 //            attackLeastHealthEnemyInRange();
-            defend();
+
             rc.yield();
         }
     }
@@ -688,12 +877,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            int numMiners = rc.readBroadcast(3);
-           
-            if (rc.isCoreReady() && rc.getTeamOre() > 200 && numMiners < desiredNumOfMINER) {
-                spawnUnit(RobotType.MINER);
-            	rc.broadcast(3, numMiners + 1);
-            }
+            spawnUnit();
 
             rc.yield();
         }
@@ -732,21 +916,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            if (rc.isCoreReady() && rc.getTeamOre() > 200){
-            	if (Clock.getRoundNum() > roundToBuildSOLDIER) {
-                    Direction newDir = getSpawnDirection(RobotType.SOLDIER);
-                    if (newDir != null) {
-                        rc.spawn(newDir, RobotType.SOLDIER);
-                    }
-            	} else if (Clock.getRoundNum() > roundToBuildBASHER) {
-                    Direction newDir = getSpawnDirection(RobotType.BASHER);
-                    if (newDir != null) {
-                        rc.spawn(newDir, RobotType.BASHER);
-                    }
-            	}
-
-            }
-
+        	spawnUnit();
             rc.yield();
         }
     }
@@ -774,10 +944,11 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-        	attackLeastHealthEnemyInRange();
-        	if (!defend()) {
-        		moveToRallyPoint();
-        	}
+        	//attackLeastHealthEnemyInRange();
+        	//if (!defend()) {
+        	//	moveToRallyPoint();
+        	//}
+        	moveToRallyPoint();
         	transferSupplies();
             rc.yield();
         }
