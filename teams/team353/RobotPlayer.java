@@ -1028,10 +1028,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            //attackLeastHealthEnemyInRange();
-            //if (!defend()) {
-            //    moveToRallyPoint();
-            //}
+            //TODO Bashers can not use defend() because they cannot call attack()
             moveToRallyPoint();
             transferSupplies();
             rc.yield();
