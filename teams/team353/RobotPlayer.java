@@ -726,7 +726,11 @@ public class RobotPlayer {
         		if (roundStart == Clock.getRoundNum() && transferAmount > 0) {
 //        			rc.setIndicatorString(0, "NumAllies: " + nearbyAllies.length + " Byte: " + Clock.getBytecodeNum());
 //        			rc.setIndicatorString(2, "Supplying " + (int)transferAmount + " to " + suppliesToThisLocation);
-    				rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
+    				try {
+    					rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
+    				} catch(GameActionException gax) {
+    					gax.printStackTrace();
+    				}
         		}
         	}
         }
