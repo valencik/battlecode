@@ -1,4 +1,5 @@
 Battlecode\ 2015
+teams/*
 
 AllowedPackages.txt
 DisallowedClasses.txt
@@ -27,6 +28,12 @@ version.txt
 .installationinformation
 
 *.class
+
+# Vim files
+*.swp
+*.swo
+*.swn
+*.swm
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
