@@ -1094,11 +1094,20 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-
-            rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
-            buildOptimally();
-            transferSupplies();
-            rc.yield();
+        	rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
+        	buildOptimally();
+        	transferSupplies();
+        	if (Clock.getRoundNum() > 400) defend();
+        	if (rc.isCoreReady()) {
+        		//mine
+        		if (rc.senseOre(rc.getLocation()) > 0) {
+        			rc.mine();
+        		}
+        		else {
+        			moveOptimally();
+        		}
+        	} 
+        	rc.yield();
         }
     }
 
