@@ -88,7 +88,7 @@ public class RobotPlayer {
     public static final int freqNumTRAININGFIELD = 318;
 
     public static int roundToLaunchAttack = 1600;
-    public static int roundToFormSupplyConvoy = 1400;
+    public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
 
     public static int currentOreGoal = 100;
 	
@@ -100,6 +100,7 @@ public class RobotPlayer {
 	public static int NUM_TOWER_PROTECTORS = 4;
 	public static int NUM_HOLE_PROTECTORS = 3;
 	public static int PROTECT_OTHERS_RANGE = 10;
+	public static int DISTANCE_TO_START_PROTECTING_SQUARED = 200;
 	
 	// Idle States
 	public static MapLocation defenseRallyPoint;
@@ -571,84 +572,71 @@ public class RobotPlayer {
             }
         }
 
-        public int suppliedLast = 0;
-        public int suppliedLastAtRound = 0;
         public void transferSupplies() throws GameActionException {
+        	double lowestSupply = rc.getSupplyLevel();
+        	if (lowestSupply == 0) {
+        		return;
+        	}
         	int roundStart = Clock.getRoundNum();
         	final MapLocation myLocation = rc.getLocation();
         	RobotInfo[] nearbyAllies = rc.senseNearbyRobots(myLocation,GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED,rc.getTeam());
-        	double lowestSupply = rc.getSupplyLevel();
         	double transferAmount = 0;
         	MapLocation suppliesToThisLocation = null;
-        	rc.setIndicatorString(0, "" + suppliedLastAtRound + " NumAllies: " + nearbyAllies.length);
         	for(RobotInfo ri:nearbyAllies){
-        		if(ri.supplyLevel<lowestSupply 
-        				&& ri.buildingLocation == null
-        				&& (suppliedLast != ri.ID || (suppliedLast == ri.ID && suppliedLastAtRound + 10 < roundStart))
-        				&& (ri.type != RobotType.HQ && ri.type != RobotType.TOWER)){
-        			lowestSupply = ri.supplyLevel;
-        			if (myType == RobotType.HQ) {
-        				transferAmount = rc.getSupplyLevel();
-        			} else {
-        				transferAmount = (rc.getSupplyLevel()-ri.supplyLevel)/2;        				
-        			}
-        			suppliesToThisLocation = ri.location;
-        			suppliedLast = ri.ID;
+        			if (ri.supplyLevel < lowestSupply) {
+        					lowestSupply = ri.supplyLevel;
+    						transferAmount = (rc.getSupplyLevel()-ri.supplyLevel)/2;        				
+        					suppliesToThisLocation = ri.location;
         		}
         	}
         	if(suppliesToThisLocation!=null){
-        		rc.setIndicatorString(1, "CurrRount:" + Clock.getRoundNum() + " Started Round: " + roundStart);
+//        		rc.setIndicatorString(1, "CurrRount:" + Clock.getRoundNum() + " Started Round: " + roundStart);
         		if (roundStart == Clock.getRoundNum() && transferAmount > 0) {
-        			suppliedLastAtRound = roundStart;
-        			rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
+//        			rc.setIndicatorString(0, "NumAllies: " + nearbyAllies.length + " Byte: " + Clock.getBytecodeNum());
+//        			rc.setIndicatorString(2, "Supplying " + (int)transferAmount + " to " + suppliesToThisLocation);
+    				rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
         		}
         	}
         }
         
-        public void formSupplyConvoy() {
+        // true, I'm in the convoy or going to be
+        // false, no place in the convoy for me
+        public boolean formSupplyConvoy() {
         	RobotInfo minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, myHQ);
-        	int radius = 3; // sqrt(15), the radius for supply
-        	MapLocation myLocation = rc.getLocation();
-        	Direction directionToTheirHQ = myHQ.directionTo(theirHQ);
-        	if (minerAtEdge == null) {
-            	if (myLocation.directionTo(theirHQ) == directionToTheirHQ
-            			&& (myHQ.distanceSquaredTo(myLocation) == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED
-        				|| myHQ.distanceSquaredTo(myLocation)-1 == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED
-        				|| myHQ.distanceSquaredTo(myLocation)-2 == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED)) {
-            		return;
-            	}
-        		goToLocation(myHQ.add(myHQ.directionTo(theirHQ), radius));
-        		return;
+        	int radius = 2; // sqrt(15), the radius for supply
+        	if (minerAtEdge != null && minerAtEdge.ID == rc.getID()) {
+        		return true;
+        	} else if (minerAtEdge == null){
+            	goToLocation(myHQ.add(myHQ.directionTo(theirHQ), radius));
+        		return true;
         	}
         	RobotInfo previousMiner = null;
-        	while (minerAtEdge != null) {
-        		previousMiner = minerAtEdge;
-        		minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, minerAtEdge.location);
-        		if (minerAtEdge == null) {
-        			directionToTheirHQ = previousMiner.location.directionTo(theirHQ);
-        			if (previousMiner.location.directionTo(myLocation) == directionToTheirHQ
-        					&& (previousMiner.location.distanceSquaredTo(myLocation) == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED
-        					|| previousMiner.location.distanceSquaredTo(myLocation)-1 == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED
-        					|| previousMiner.location.distanceSquaredTo(myLocation)-2 == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED)) {
-        				return;
-        			}
-        		}
-        	}
-        	goToLocation(previousMiner.location.add(previousMiner.location.directionTo(theirHQ), radius));
+        	try {
+	            while (minerAtEdge != null && minerAtEdge.location.distanceSquaredTo(getRallyPoint()) > 4) {
+	            	previousMiner = minerAtEdge;
+	            	minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, minerAtEdge.location);
+	            	if (minerAtEdge != null && minerAtEdge.ID == rc.getID()) {
+	            		return true;
+	            	} else if (minerAtEdge == null) {
+	            		goToLocation(previousMiner.location.add(previousMiner.location.directionTo(theirHQ), radius));
+	            		return true;
+	            	}
+	            }
+            } catch (GameActionException e) {
+	            e.printStackTrace();
+            }
+        	return false;
         }
         
         public RobotInfo getUnitAtEdgeOfSupplyRangeOf(RobotType unitType, MapLocation startLocation) {
-        	RobotInfo[] allies = rc.senseNearbyRobots(startLocation, GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED, myTeam);
-        	Direction directionToTheirHQ = startLocation.directionTo(theirHQ);
-        	for (RobotInfo ri : allies) {
-            	if (startLocation.directionTo(ri.location) == directionToTheirHQ
-            			&& (startLocation.distanceSquaredTo(ri.location) == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED
-            				|| startLocation.distanceSquaredTo(ri.location)-1 == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED
-            				|| startLocation.distanceSquaredTo(ri.location)-2 == GameConstants.SUPPLY_TRANSFER_RADIUS_SQUARED)
-            			&& ri.type == unitType) {
-            		return ri;
-            	}
-            }
+        	MapLocation locationInChain =  startLocation.add(myHQ.directionTo(theirHQ), 2);
+        	if (rc.canSenseLocation(locationInChain)) {
+        		try {
+	                return rc.senseRobotAtLocation(locationInChain);
+                } catch (GameActionException e) {
+	                e.printStackTrace();
+                }
+        	}
         	return null;
         }
         
@@ -730,7 +718,7 @@ public class RobotPlayer {
     						if (towerHoleX != -1) {
     							MapLocation holeLocation = new MapLocation(towerHoleX, towerHoleY);
     							RobotInfo[] nearbyTeammates = rc.senseNearbyRobots(holeLocation, 5, myTeam);
-    							if (nearbyTeammates.length < NUM_HOLE_PROTECTORS) {
+    							if (nearbyTeammates.length < NUM_HOLE_PROTECTORS && rc.getLocation().distanceSquaredTo(holeLocation) <= DISTANCE_TO_START_PROTECTING_SQUARED) {
     								defendingHole = true;
     								towerHoleX = -1;
 									goToLocation(holeLocation);    									
@@ -759,7 +747,7 @@ public class RobotPlayer {
     				int closestDist = 999999;
     				for (MapLocation tower : myTowers) {
     					RobotInfo[] nearbyRobots = getTeammatesNearTower(tower);
-    					if (nearbyRobots.length < NUM_TOWER_PROTECTORS) { //tower underprotected
+    					if (nearbyRobots.length < NUM_TOWER_PROTECTORS && rc.getLocation().distanceSquaredTo(tower) <= DISTANCE_TO_START_PROTECTING_SQUARED) { //tower underprotected
     						int dist = tower.distanceSquaredTo(theirHQ);
     						if (dist < closestDist) {
     							closestDist = dist;
@@ -769,11 +757,6 @@ public class RobotPlayer {
     				}
     				// TODO: End compute
     				goToLocation(closestTower);
-//    				if (!closestTower.equals(defenseRallyPoint)) {
-//						if (closestTower.distanceSquaredTo(closestTower) > (RobotType.TOWER.attackRadiusSquared)) {
-//							goToLocation(closestTower);
-//						}
-//    				}
     				//System.out.println("B2: Protect Towers.");
     				return true;
     			}
@@ -792,6 +775,14 @@ public class RobotPlayer {
     	}
     	
     	public void goToLocation(MapLocation location) {
+    		try {
+	            if (rc.canSenseLocation(location) && rc.senseRobotAtLocation(location) != null 
+	            		&& rc.getLocation().distanceSquaredTo(location)<3) { // 3 squares
+	            	return;
+	            }
+            } catch (GameActionException e1) {
+	            e1.printStackTrace();
+            }
 			Direction direction = getMoveDir(location);
 			if (direction != null && rc.isCoreReady()) {
 				try {
@@ -990,7 +981,6 @@ public class RobotPlayer {
                 }
             }
             transferSupplies();
-            defend();
             rc.yield();
         }
     }
@@ -1002,8 +992,8 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
+    		transferSupplies();
             spawnUnit();
-
             rc.yield();
         }
     }
@@ -1016,19 +1006,28 @@ public class RobotPlayer {
     	}
 
     	public void execute() throws GameActionException {
+    		boolean inConvoy = false;
     		if (Clock.getRoundNum()>roundToFormSupplyConvoy) {
-    			formSupplyConvoy();
+    			inConvoy = formSupplyConvoy();
+    		}
+    		if (!inConvoy) {
+    			if (!defend()) {
+    				if (rc.isCoreReady()) {
+    					//mine
+    					if (rc.senseOre(rc.getLocation()) > 0) {
+    						rc.mine();
+    					}
+    					else {
+    						moveOptimally();
+    					}
+    				} 		
+    			}
     		} else {
-    			defend();
-    			if (rc.isCoreReady()) {
-    				//mine
-    				if (rc.senseOre(rc.getLocation()) > 0) {
-    					rc.mine();
-    				}
-    				else {
-    				    moveOptimally();
-    				}
-    			}    			
+				if (rc.isCoreReady()) {
+					if (rc.senseOre(rc.getLocation()) > 0) {
+						rc.mine();
+					}
+				} 	
     		}
     		transferSupplies();
     		rc.yield();
@@ -1042,6 +1041,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
+    		transferSupplies();
             spawnUnit();
             rc.yield();
         }
@@ -1083,6 +1083,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
+        	transferSupplies();
             attackLeastHealthEnemyInRange();
             rc.yield();
         }
