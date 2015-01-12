@@ -14,14 +14,14 @@ public class RobotPlayer {
     public static int roundToBuildCOMMANDER = 2000;
     public static int roundToBuildCOMPUTER = 2000;
     public static int roundToBuildDRONE = 2000;
-    public static int roundToBuildHANDWASHSTATION = 2000;
+    public static int roundToBuildHANDWASHSTATION = 1700;
     public static int roundToBuildHELIPAD = 2000;
     public static int roundToBuildLAUNCHER = 2000;
     public static int roundToBuildMINER = 1;
     public static int roundToBuildMINERFACTORY = 100;
     public static int roundToBuildMISSILE = 2000;
     public static int roundToBuildSOLDIER = 50;
-    public static int roundToBuildSUPPLYDEPOT = 2000;
+    public static int roundToBuildSUPPLYDEPOT = 800;
     public static int roundToBuildTANK = 2000;
     public static int roundToBuildTANKFACTORY = 2000;
     public static int roundToBuildTECHNOLOGYINSTITUTE = 2000;
@@ -32,7 +32,7 @@ public class RobotPlayer {
     public static int roundToFinishHANDWASHSTATION = 2000;
     public static int roundToFinishHELIPAD = 2000;
     public static int roundToFinishMINERFACTORY = 2000;
-    public static int roundToFinishSUPPLYDEPOT = 2000;
+    public static int roundToFinishSUPPLYDEPOT = 1200;
     public static int roundToFinishTANKFACTORY = 2000;
     public static int roundToFinishTECHNOLOGYINSTITUTE = 2000;
     public static int roundToFinishTRAININGFIELD = 2000;
@@ -40,18 +40,18 @@ public class RobotPlayer {
     public static int desiredNumOfAEROSPACELAB = 0;
     public static int desiredNumOfBARRACKS = 4;
     public static int desiredNumOfBASHER = 50;
-    public static int desiredNumOfBEAVER = 10;
+    public static int desiredNumOfBEAVER = 15;
     public static int desiredNumOfCOMMANDER = 0;
     public static int desiredNumOfCOMPUTER = 0;
     public static int desiredNumOfDRONE = 0;
-    public static int desiredNumOfHANDWASHSTATION = 2;
+    public static int desiredNumOfHANDWASHSTATION = 3;
     public static int desiredNumOfHELIPAD = 0;
     public static int desiredNumOfLAUNCHER = 0;
-    public static int desiredNumOfMINER = 30;
+    public static int desiredNumOfMINER = 70;
     public static int desiredNumOfMINERFACTORY = 2;
     public static int desiredNumOfMISSILE = 0;
     public static int desiredNumOfSOLDIER = 200;
-    public static int desiredNumOfSUPPLYDEPOT = 2;
+    public static int desiredNumOfSUPPLYDEPOT = 4;
     public static int desiredNumOfTANK = 0;
     public static int desiredNumOfTANKFACTORY = 0;
     public static int desiredNumOfTECHNOLOGYINSTITUTE = 0;
@@ -125,6 +125,10 @@ public class RobotPlayer {
             myself = new Basher(rc);
         } else if (rc.getType() == RobotType.TOWER) {
             myself = new Tower(rc);
+        } else if (rc.getType() == RobotType.SUPPLYDEPOT) {
+            myself = new Supplydepot(rc);
+        } else if (rc.getType() == RobotType.HANDWASHSTATION) {
+            myself = new Handwashstation(rc);
         } else {
             myself = new BaseBot(rc);
         }
@@ -239,7 +243,7 @@ public class RobotPlayer {
                 if (rc.canSpawn(d, type)) {
                     return d;
                 } else {
-                    System.out.println("Could not find valid spawn location!");
+                    //System.out.println("Could not find valid spawn location!");
                 }
             }
             return null;
@@ -258,7 +262,7 @@ public class RobotPlayer {
                 if (rc.canBuild(d, type)) {
                     return d;
                 } else {
-                    System.out.println("Could not find valid build location!");
+                    //System.out.println("Could not find valid build location!");
                 }
             }
             return null;
@@ -359,7 +363,7 @@ public class RobotPlayer {
                     }
                 }
                 
-                System.out.println("No suitable direction found!");
+                //System.out.println("No suitable direction found!");
             }
 
         }
@@ -487,14 +491,14 @@ public class RobotPlayer {
                     return;
 
                 default:
-                    System.out.println("ERRROR in spawnUnit()!");
+                    //System.out.println("ERRROR in spawnUnit()!");
                     return;
                 }
 
                 //Get a direction and then actually spawn the unit.
                 Direction randomDir = getSpawnDir(spawnType);
                 if(rc.isCoreReady()&& randomDir != null){
-                    System.out.println("Spawning... - " + myType);
+                    //System.out.println("Spawning... - " + myType);
                     rc.spawn(randomDir, spawnType);
                     incrementCount(spawnType); 
                 }
@@ -530,7 +534,7 @@ public class RobotPlayer {
                     } else {
                         if (round > (roundToBuildBARRACKS + (roundToFinishBARRACKS - roundToBuildBARRACKS) / desiredNumOfBARRACKS * rc.readBroadcast(freqNumBARRACKS))) {
                             rc.broadcast(freqCurrentlySavingOre, 1);
-                            System.out.println("Saving Ore!!!!");
+                            //System.out.println("Saving Ore!!!!");
                             return;
                         }
                     }
@@ -699,7 +703,7 @@ public class RobotPlayer {
                 rc.broadcast(freqNumTRAININGFIELD, rc.readBroadcast(freqNumTRAININGFIELD)+1);
                 break;
             default:
-                System.out.println("ERRROR!");
+                //System.out.println("ERRROR!");
                 return;
             }
         }
@@ -722,10 +726,10 @@ public class RobotPlayer {
         		}
         	}
         	if(suppliesToThisLocation!=null){
-//        		rc.setIndicatorString(1, "CurrRount:" + Clock.getRoundNum() + " Started Round: " + roundStart);
+        		//rc.setIndicatorString(1, "CurrRount:" + Clock.getRoundNum() + " Started Round: " + roundStart);
         		if (roundStart == Clock.getRoundNum() && transferAmount > 0) {
-//        			rc.setIndicatorString(0, "NumAllies: " + nearbyAllies.length + " Byte: " + Clock.getBytecodeNum());
-//        			rc.setIndicatorString(2, "Supplying " + (int)transferAmount + " to " + suppliesToThisLocation);
+        			//rc.setIndicatorString(0, "NumAllies: " + nearbyAllies.length + " Byte: " + Clock.getBytecodeNum());
+        			//rc.setIndicatorString(2, "Supplying " + (int)transferAmount + " to " + suppliesToThisLocation);
     				try {
     					rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
     				} catch(GameActionException gax) {
@@ -955,7 +959,7 @@ public class RobotPlayer {
     	
     	// Find out if there are any holes between a teams tower and their HQ
     	public MapLocation[] computeHoles() {
-    		System.out.println("BYTESTART: " + Clock.getBytecodeNum());
+    		//System.out.println("BYTESTART: " + Clock.getBytecodeNum());
     		MapLocation[] towerLocations = rc.senseTowerLocations();
     		MapLocation[][] towerRadii = new MapLocation[towerLocations.length][];
     		for(int i = 0; i < towerLocations.length; i++) {
@@ -1016,30 +1020,30 @@ public class RobotPlayer {
     				overlapped[i]++;
     				coveredBottom = true;
     			}
-//    			System.out.println("Tower " + i + " overlapped " + overlapped[i] + " " + towerLocations[i]);
+    			//System.out.println("Tower " + i + " overlapped " + overlapped[i] + " " + towerLocations[i]);
     			if (overlapped[i] < 2) {
     				try {
     					int towerAttackRadius = (int) Math.sqrt(RobotType.TOWER.attackRadiusSquared) + 1;
     					if (!coveredLeft) {
-    						System.out.println("Tower " + towerLocations[i] + " Not covered left");
+    						//System.out.println("Tower " + towerLocations[i] + " Not covered left");
     						rc.broadcast(holesBroadcastIndex, towerLocations[i].x - towerAttackRadius);
     						rc.broadcast(holesBroadcastIndex + 1, towerLocations[i].y);
     						holesBroadcastIndex+=2;
     					}
     					if (!coveredRight) {
-    						System.out.println("Tower " + towerLocations[i] + " Not covered right");
+    						//System.out.println("Tower " + towerLocations[i] + " Not covered right");
     						rc.broadcast(holesBroadcastIndex, towerLocations[i].x + towerAttackRadius);
     						rc.broadcast(holesBroadcastIndex + 1, towerLocations[i].y);
     						holesBroadcastIndex+=2;
     					}
     					if (!coveredTop) {
-    						System.out.println("Tower " + towerLocations[i] + " Not covered top");
+    						//System.out.println("Tower " + towerLocations[i] + " Not covered top");
     						rc.broadcast(holesBroadcastIndex, towerLocations[i].x);
     						rc.broadcast(holesBroadcastIndex + 1, towerLocations[i].y - towerAttackRadius);
     						holesBroadcastIndex+=2;
     					}
     					if (!coveredBottom) {
-    						System.out.println("Tower " + towerLocations[i] + " Not covered bottom");
+    						//System.out.println("Tower " + towerLocations[i] + " Not covered bottom");
     						rc.broadcast(holesBroadcastIndex, towerLocations[i].x);
     						rc.broadcast(holesBroadcastIndex + 1, towerLocations[i].y + towerAttackRadius);
     						holesBroadcastIndex+=2;
@@ -1056,7 +1060,7 @@ public class RobotPlayer {
     			e.printStackTrace();
     		}
     		
-    		System.out.println("BYTEEND on " + Clock.getRoundNum() + ": " + Clock.getBytecodeNum());
+    		//System.out.println("BYTEEND on " + Clock.getRoundNum() + ": " + Clock.getBytecodeNum());
     		return null;
     	}
     	
@@ -1098,20 +1102,21 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-        	rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
-        	buildOptimally();
-        	transferSupplies();
-        	if (Clock.getRoundNum() > 400) defend();
-        	if (rc.isCoreReady()) {
-        		//mine
-        		if (rc.senseOre(rc.getLocation()) > 0) {
-        			rc.mine();
-        		}
-        		else {
-        			moveOptimally();
-        		}
-        	} 
-        	rc.yield();
+
+            //rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
+            buildOptimally();
+            transferSupplies();
+            if (Clock.getRoundNum() > 400) defend();
+            if (rc.isCoreReady()) {
+                //mine
+                if (rc.senseOre(rc.getLocation()) > 0) {
+                    rc.mine();
+                }
+                else {
+                    moveOptimally();
+                }
+            }               
+            rc.yield();
         }
     }
 
@@ -1219,5 +1224,26 @@ public class RobotPlayer {
         }
     }
 
+    //SUPPLYDEPOT
+    public static class Supplydepot extends BaseBot {
+        public Supplydepot(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            rc.yield();
+        }
+    }
+    
+    //HANDWASHSTATION
+    public static class Handwashstation extends BaseBot {
+        public Handwashstation(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            rc.yield();
+        }
+    }
 
 }
