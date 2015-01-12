@@ -7,65 +7,55 @@ import java.util.*;
 public class RobotPlayer {
 
     //--Begin Parameters
-    public static int roundToBuildAEROSPACELAB = 100;
+    public static int roundToBuildAEROSPACELAB = 2000;
     public static int roundToBuildBARRACKS = 500;
-    public static int roundToBuildBASHER = 1500;
+    public static int roundToBuildBASHER = 1200;
     public static int roundToBuildBEAVER = 0;
-    public static int roundToBuildCOMMANDER = 100;
-    public static int roundToBuildCOMPUTER = 100;
-    public static int roundToBuildDRONE = 100;
-    public static int roundToBuildHANDWASHSTATION = 100;
-    public static int roundToBuildHELIPAD = 100;
-    public static int roundToBuildLAUNCHER = 100;
+    public static int roundToBuildCOMMANDER = 2000;
+    public static int roundToBuildCOMPUTER = 2000;
+    public static int roundToBuildDRONE = 2000;
+    public static int roundToBuildHANDWASHSTATION = 2000;
+    public static int roundToBuildHELIPAD = 2000;
+    public static int roundToBuildLAUNCHER = 2000;
     public static int roundToBuildMINER = 1;
     public static int roundToBuildMINERFACTORY = 100;
-    public static int roundToBuildMISSILE = 100;
+    public static int roundToBuildMISSILE = 2000;
     public static int roundToBuildSOLDIER = 50;
-    public static int roundToBuildSUPPLYDEPOT = 100;
-    public static int roundToBuildTANK = 100;
-    public static int roundToBuildTANKFACTORY = 100;
-    public static int roundToBuildTECHNOLOGYINSTITUTE = 100;
-    public static int roundToBuildTRAININGFIELD = 100;
+    public static int roundToBuildSUPPLYDEPOT = 2000;
+    public static int roundToBuildTANK = 2000;
+    public static int roundToBuildTANKFACTORY = 2000;
+    public static int roundToBuildTECHNOLOGYINSTITUTE = 2000;
+    public static int roundToBuildTRAININGFIELD = 2000;
+    
+    public static int roundToFinishAEROSPACELAB = 2000;
+    public static int roundToFinishBARRACKS = 1500;
+    public static int roundToFinishHANDWASHSTATION = 2000;
+    public static int roundToFinishHELIPAD = 2000;
+    public static int roundToFinishMINERFACTORY = 2000;
+    public static int roundToFinishSUPPLYDEPOT = 2000;
+    public static int roundToFinishTANKFACTORY = 2000;
+    public static int roundToFinishTECHNOLOGYINSTITUTE = 2000;
+    public static int roundToFinishTRAININGFIELD = 2000;
 
-    public static int desiredNumOfAEROSPACELAB = 8;
-    public static int desiredNumOfBARRACKS = 8;
+    public static int desiredNumOfAEROSPACELAB = 0;
+    public static int desiredNumOfBARRACKS = 4;
     public static int desiredNumOfBASHER = 50;
     public static int desiredNumOfBEAVER = 10;
-    public static int desiredNumOfCOMMANDER = 8;
-    public static int desiredNumOfCOMPUTER = 8;
-    public static int desiredNumOfDRONE = 8;
-    public static int desiredNumOfHANDWASHSTATION = 8;
-    public static int desiredNumOfHELIPAD = 8;
-    public static int desiredNumOfLAUNCHER = 8;
+    public static int desiredNumOfCOMMANDER = 0;
+    public static int desiredNumOfCOMPUTER = 0;
+    public static int desiredNumOfDRONE = 0;
+    public static int desiredNumOfHANDWASHSTATION = 2;
+    public static int desiredNumOfHELIPAD = 0;
+    public static int desiredNumOfLAUNCHER = 0;
     public static int desiredNumOfMINER = 30;
-    public static int desiredNumOfMINERFACTORY = 8;
-    public static int desiredNumOfMISSILE = 8;
+    public static int desiredNumOfMINERFACTORY = 2;
+    public static int desiredNumOfMISSILE = 0;
     public static int desiredNumOfSOLDIER = 200;
-    public static int desiredNumOfSUPPLYDEPOT = 8;
-    public static int desiredNumOfTANK = 8;
-    public static int desiredNumOfTANKFACTORY = 8;
-    public static int desiredNumOfTECHNOLOGYINSTITUTE = 8;
-    public static int desiredNumOfTRAININGFIELD = 8;
-
-    public static int numAEROSPACELAB;
-    public static int numBARRACKS;
-    public static int numBASHER;
-    public static int numBEAVER;
-    public static int numCOMMANDER;
-    public static int numCOMPUTER;
-    public static int numDRONE;
-    public static int numHANDWASHSTATION;
-    public static int numHELIPAD;
-    public static int numLAUNCHER;
-    public static int numMINER;
-    public static int numMINERFACTORY;
-    public static int numMISSILE;
-    public static int numSOLDIER;
-    public static int numSUPPLYDEPOT;
-    public static int numTANK;
-    public static int numTANKFACTORY;
-    public static int numTECHNOLOGYINSTITUTE;
-    public static int numTRAININGFIELD;
+    public static int desiredNumOfSUPPLYDEPOT = 2;
+    public static int desiredNumOfTANK = 0;
+    public static int desiredNumOfTANKFACTORY = 0;
+    public static int desiredNumOfTECHNOLOGYINSTITUTE = 0;
+    public static int desiredNumOfTRAININGFIELD = 0;
 
     public static final int freqNumAEROSPACELAB = 300;
     public static final int freqNumBARRACKS = 301;
@@ -108,6 +98,9 @@ public class RobotPlayer {
 	
 	// Supply
 	public static int NUM_ROUNDS_TO_KEEP_SUPPLIED = 20;
+	
+	//Economy
+	public static int freqCurrentlySavingOre = 0;
 	
 	//--End Parameters
 	
@@ -428,14 +421,21 @@ public class RobotPlayer {
                 RobotType spawnType;
                 int round = Clock.getRoundNum();
                 double ore = rc.getTeamOre();
+                //System.out.println(myType + " wants to spawn with " + ore);
+                
+                //Check if we are currently saving ore
+                if (rc.readBroadcast(freqCurrentlySavingOre) == 1){
+                    //System.out.println("We are saving, can't spawn.");
+                    return;
+                }
 
                 switch(myType){
 
                 case BARRACKS:                    
-                    if (round > roundToBuildSOLDIER && rc.readBroadcast(freqNumSOLDIER) < desiredNumOfSOLDIER && ore > 100){
+                    if (round > roundToBuildSOLDIER && rc.readBroadcast(freqNumSOLDIER) < desiredNumOfSOLDIER && ore > 60){
                         spawnType = RobotType.SOLDIER;
                         break;
-                    } else if (round > roundToBuildBASHER && rc.readBroadcast(freqNumBASHER) < desiredNumOfBASHER && ore > 100){
+                    } else if (round > roundToBuildBASHER && rc.readBroadcast(freqNumBASHER) < desiredNumOfBASHER && ore > 80){
                         spawnType = RobotType.BASHER;
                         break;
                     }
@@ -447,31 +447,31 @@ public class RobotPlayer {
                     }
                     return;
                 case HELIPAD:
-                    if (round > roundToBuildDRONE && rc.readBroadcast(freqNumDRONE) < desiredNumOfDRONE && ore > 100){
+                    if (round > roundToBuildDRONE && rc.readBroadcast(freqNumDRONE) < desiredNumOfDRONE && ore > 125){
                         spawnType = RobotType.DRONE;
                         break;
                     }
                     return;
                 case AEROSPACELAB:
-                    if (round > roundToBuildLAUNCHER && rc.readBroadcast(freqNumLAUNCHER) < desiredNumOfLAUNCHER && ore > 100){
+                    if (round > roundToBuildLAUNCHER && rc.readBroadcast(freqNumLAUNCHER) < desiredNumOfLAUNCHER && ore > 400){
                         spawnType = RobotType.LAUNCHER;
                         break;
                     }
                     return;
                 case MINERFACTORY:
-                    if (round > roundToBuildMINER && rc.readBroadcast(freqNumMINER) < desiredNumOfMINER && ore > 100){
+                    if (round > roundToBuildMINER && rc.readBroadcast(freqNumMINER) < desiredNumOfMINER && ore > 50){
                         spawnType = RobotType.MINER;
                         break;
                     }
                     return;
                 case TANKFACTORY:
-                    if (round > roundToBuildTANK && rc.readBroadcast(freqNumTANK) < desiredNumOfTANK && ore > 100){
+                    if (round > roundToBuildTANK && rc.readBroadcast(freqNumTANK) < desiredNumOfTANK && ore > 250){
                         spawnType = RobotType.TANK;
                         break;
                     }
                     return;
                 case TECHNOLOGYINSTITUTE:
-                    if (round > roundToBuildCOMPUTER && rc.readBroadcast(freqNumCOMPUTER) < desiredNumOfCOMPUTER && ore > 100){
+                    if (round > roundToBuildCOMPUTER && rc.readBroadcast(freqNumCOMPUTER) < desiredNumOfCOMPUTER && ore > 10){
                         spawnType = RobotType.COMPUTER;
                         break;
                     }
@@ -491,10 +491,139 @@ public class RobotPlayer {
                 //Get a direction and then actually spawn the unit.
                 Direction randomDir = getSpawnDir(spawnType);
                 if(rc.isCoreReady()&& randomDir != null){
+                    System.out.println("Spawning... - " + myType);
                     rc.spawn(randomDir, spawnType);
                     incrementCount(spawnType); 
                 }
             } //isCoreReady
+        }
+        
+        //Spawns unit based on calling type. Performs all checks.
+        public void buildOptimally() throws GameActionException {
+            if (rc.isCoreReady()){
+                RobotType buildType = null;
+                int round = Clock.getRoundNum();
+                double ore = rc.getTeamOre();
+
+                if (round > roundToBuildAEROSPACELAB && rc.readBroadcast(freqNumAEROSPACELAB) < desiredNumOfAEROSPACELAB){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 500){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.AEROSPACELAB);
+                        return;
+                    } else {
+                        if (round > (roundToBuildAEROSPACELAB + (roundToFinishAEROSPACELAB - roundToBuildAEROSPACELAB) / desiredNumOfAEROSPACELAB * rc.readBroadcast(freqNumAEROSPACELAB))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            return;
+                        }
+                    }
+                }
+                if (round > roundToBuildBARRACKS && rc.readBroadcast(freqNumBARRACKS) < desiredNumOfBARRACKS){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 300){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.BARRACKS);
+                        return;
+                    } else {
+                        if (round > (roundToBuildBARRACKS + (roundToFinishBARRACKS - roundToBuildBARRACKS) / desiredNumOfBARRACKS * rc.readBroadcast(freqNumBARRACKS))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            System.out.println("Saving Ore!!!!");
+                            return;
+                        }
+                    }
+                }
+                if (round > roundToBuildHANDWASHSTATION && rc.readBroadcast(freqNumHANDWASHSTATION) < desiredNumOfHANDWASHSTATION){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 200){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.HANDWASHSTATION);
+                        return;
+                    } else {
+                        if (round > (roundToBuildHANDWASHSTATION + (roundToFinishHANDWASHSTATION - roundToBuildHANDWASHSTATION) / desiredNumOfHANDWASHSTATION * rc.readBroadcast(freqNumHANDWASHSTATION))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            return;
+                        }
+                    }
+                }
+                if (round > roundToBuildHELIPAD && rc.readBroadcast(freqNumHELIPAD) < desiredNumOfHELIPAD){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 300){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.HELIPAD);
+                        return;
+                    } else {
+                        if (round > (roundToBuildHELIPAD + (roundToFinishHELIPAD - roundToBuildHELIPAD) / desiredNumOfHELIPAD * rc.readBroadcast(freqNumHELIPAD))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            return;
+                        }
+                    }
+                }
+                if (round > roundToBuildMINERFACTORY && rc.readBroadcast(freqNumMINERFACTORY) < desiredNumOfMINERFACTORY){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 500){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.MINERFACTORY);
+                        return;
+                    } else {
+                        if (round > (roundToBuildMINERFACTORY + (roundToFinishMINERFACTORY - roundToBuildMINERFACTORY) / desiredNumOfMINERFACTORY * rc.readBroadcast(freqNumMINERFACTORY))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            return;
+                        }
+                    }
+                }
+                if (round > roundToBuildSUPPLYDEPOT && rc.readBroadcast(freqNumSUPPLYDEPOT) < desiredNumOfSUPPLYDEPOT){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 100){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.SUPPLYDEPOT);
+                        return;
+                    } else {
+                        if (round > (roundToBuildSUPPLYDEPOT + (roundToFinishSUPPLYDEPOT - roundToBuildSUPPLYDEPOT) / desiredNumOfSUPPLYDEPOT * rc.readBroadcast(freqNumSUPPLYDEPOT))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            return;
+                        }
+                    }
+                }
+                if (round > roundToBuildTANKFACTORY && rc.readBroadcast(freqNumTANKFACTORY) < desiredNumOfTANKFACTORY){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 500){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.TANKFACTORY);
+                        return;
+                    } else {
+                        if (round > (roundToBuildTANKFACTORY + (roundToFinishTANKFACTORY - roundToBuildTANKFACTORY) / desiredNumOfTANKFACTORY * rc.readBroadcast(freqNumTANKFACTORY))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            return;
+                        }
+                    }
+                }
+                if (round > roundToBuildTECHNOLOGYINSTITUTE && rc.readBroadcast(freqNumTECHNOLOGYINSTITUTE) < desiredNumOfTECHNOLOGYINSTITUTE){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 200){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.TECHNOLOGYINSTITUTE);
+                        return;
+                    } else {
+                        if (round > (roundToBuildTECHNOLOGYINSTITUTE + (roundToFinishTECHNOLOGYINSTITUTE - roundToBuildTECHNOLOGYINSTITUTE) / desiredNumOfTECHNOLOGYINSTITUTE * rc.readBroadcast(freqNumTECHNOLOGYINSTITUTE))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            return;
+                        }
+                    }
+                }
+                if (round > roundToBuildTRAININGFIELD && rc.readBroadcast(freqNumTRAININGFIELD) < desiredNumOfTRAININGFIELD){
+                    //We don't have as many Barracks as we want...
+                    if (ore > 200){
+                        rc.broadcast(freqCurrentlySavingOre, 0);
+                        buildUnit(RobotType.TRAININGFIELD);
+                        return;
+                    } else {
+                        if (round > (roundToBuildTRAININGFIELD + (roundToFinishTRAININGFIELD - roundToBuildTRAININGFIELD) / desiredNumOfTRAININGFIELD * rc.readBroadcast(freqNumTRAININGFIELD))) {
+                            rc.broadcast(freqCurrentlySavingOre, 1);
+                            return;
+                        }
+                    }
+                }
+            }
         }
 
         //TODO copy the work done on spawnUnit()
@@ -502,6 +631,7 @@ public class RobotPlayer {
             Direction randomDir = getBuildDir(type);
             if(rc.isCoreReady()&& randomDir != null){
                 rc.build(randomDir, type);
+                incrementCount(type);
             }
         }
 
@@ -973,22 +1103,7 @@ public class RobotPlayer {
         public void execute() throws GameActionException {
 
             rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
-            defend();
-            if (rc.isCoreReady()) {
-                if (Clock.getRoundNum() > roundToBuildMINERFACTORY && rc.getTeamOre() > 500) {
-                    buildUnit(RobotType.MINERFACTORY);
-                } else if (Clock.getRoundNum() > roundToBuildBARRACKS && rc.getTeamOre() > 300) {
-                    buildUnit(RobotType.BARRACKS);
-                } else {
-                    //mine
-                    if (rc.senseOre(rc.getLocation()) > 1) {
-                        rc.mine();
-                    }
-                    else {
-                        moveOptimally();
-                    }
-                }
-            }
+            buildOptimally();
             transferSupplies();
             defend();
             rc.yield();
