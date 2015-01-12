@@ -28,6 +28,12 @@ version.txt
 
 *.class
 
+# Vim files
+*.swp
+*.swo
+*.swn
+*.swm
+
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
