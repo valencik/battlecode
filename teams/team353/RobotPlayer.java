@@ -149,6 +149,7 @@ public class RobotPlayer {
         protected Team myTeam, theirTeam;
         protected int myRange;
         protected RobotType myType;
+        static Random rand;
         
         public BaseBot(RobotController rc) {
             this.rc = rc;
@@ -158,6 +159,7 @@ public class RobotPlayer {
             this.theirTeam = this.myTeam.opponent();
             this.myType = rc.getType();
             this.myRange = myType.attackRadiusSquared;
+            rand = new Random(rc.getID());
         }
 
         public int getDistanceSquared(MapLocation A, MapLocation B){
@@ -330,28 +332,66 @@ public class RobotPlayer {
             return rallyPoint;
         }
 
-        //TODO implement safety checks!
-        public void moveRealGood() throws GameActionException {
+        //Moves a random safe direction from input array
+        public void moveOptimally(Direction[] optimalDirections) throws GameActionException {
+            //TODO check safety
+            if (optimalDirections != null) {
+                boolean lookingForDirection = true;
+                while(lookingForDirection){
+                    MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
+                    Direction randomDirection = optimalDirections[(int) (rand.nextDouble()*optimalDirections.length)];
+                    MapLocation tileInFront = rc.getLocation().add(randomDirection);
+
+                    //check that the direction in front is not a tile that can be attacked by the enemy towers
+                    boolean tileInFrontSafe = true;
+                    for(MapLocation m: enemyTowers){
+                        if(m.distanceSquaredTo(tileInFront)<=RobotType.TOWER.attackRadiusSquared){
+                            tileInFrontSafe = false;
+                            break;
+                        }
+                    }
+
+                    //check that we are not facing off the edge of the map
+                    if(rc.senseTerrainTile(tileInFront)!=TerrainTile.NORMAL||!tileInFrontSafe){
+                        randomDirection = randomDirection.rotateLeft();
+                    }else{
+                        //try to move in the randomDirection direction
+                        if(rc.isCoreReady()&&rc.canMove(randomDirection)){
+                            rc.move(randomDirection);
+                            lookingForDirection = false;
+                            return;
+                        }
+                    }
+                }
+                
+                System.out.println("No suitable direction found!");
+            }
+
+        }
+        
+        //Gets optimal directions and then calls moveOptimally() with those directions.
+        public void moveOptimally() throws GameActionException {
+            Direction[] optimalDirections = getOptimalDirections();
+            if (optimalDirections != null) {
+                moveOptimally(optimalDirections);
+            }
+        }
+        
+        //TODO Finish
+        public Direction[] getOptimalDirections() throws GameActionException {
             //  The switch statement should result in an array of directions that make sense
-            //for the RobotType. Then we can go through the array and determine if the
-            //location is safe, or off an edge.
+            //for the RobotType. Safety is considered in moveOptimally()
 
             int currentRound = Clock.getRoundNum();
             RobotType currentRobotType = rc.getType();
+            Direction[] optimalDirections = null;
 
             switch(currentRobotType){
             case BASHER:
                 break;
             case BEAVER:
-                Direction newDir = null;
                 if (getDistanceSquared(this.myHQ) < 50){
-                    newDir = getMoveDirAway(this.myHQ);    
-                } else {
-                    newDir = getMoveDirAway(this.theirHQ);
-                }
-
-                if (newDir != null) {
-                    rc.move(newDir);
+                    optimalDirections = getDirectionsAway(this.myHQ);    
                 }
                 break;
             case COMMANDER:
@@ -363,6 +403,9 @@ public class RobotPlayer {
             case LAUNCHER:
                 break;
             case MINER:
+                if (getDistanceSquared(this.myHQ) < 50){
+                    optimalDirections = getDirectionsToward(this.myHQ);    
+                }
                 break;
             case MISSILE:
                 break;
@@ -373,6 +416,7 @@ public class RobotPlayer {
             default:
                 //error
             } //Done RobotType specific actions.
+            return optimalDirections;
 
         }
 
@@ -940,7 +984,7 @@ public class RobotPlayer {
                         rc.mine();
                     }
                     else {
-                        moveRealGood();
+                        moveOptimally();
                     }
                 }
             }
@@ -981,11 +1025,7 @@ public class RobotPlayer {
     					rc.mine();
     				}
     				else {
-    					Direction newDir = getMoveDirAway(this.theirHQ);
-    					
-    					if (newDir != null) {
-    						rc.move(newDir);
-    					}
+    				    moveOptimally();
     				}
     			}    			
     		}
