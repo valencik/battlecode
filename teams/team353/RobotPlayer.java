@@ -87,7 +87,8 @@ public class RobotPlayer {
     public static final int freqNumTECHNOLOGYINSTITUTE = 317;
     public static final int freqNumTRAININGFIELD = 318;
 
-    public static int roundToLaunchAttack = 1650;
+    public static int roundToLaunchAttack = 1600;
+    public static int roundToFormSupplyConvoy = 1400;
 
     public static int currentOreGoal = 100;
 	
@@ -1015,7 +1016,7 @@ public class RobotPlayer {
     	}
 
     	public void execute() throws GameActionException {
-    		if (Clock.getRoundNum()>roundToLaunchAttack - 200) {
+    		if (Clock.getRoundNum()>roundToFormSupplyConvoy) {
     			formSupplyConvoy();
     		} else {
     			defend();
