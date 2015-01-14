@@ -60,6 +60,7 @@ public class RobotPlayer {
 		
 		public static int roundToLaunchAttack = 1600;
 		public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
+		public static int RADIUS_FOR_SUPPLY_CONVOY = 2;
 		
 		public static int currentOreGoal = 100;
 		
@@ -81,7 +82,6 @@ public class RobotPlayer {
 	
 
 	public static class smuIndices {
-
 		public static int RALLY_POINT_X = 0;
 		public static int RALLY_POINT_Y = 1;
 		
@@ -109,7 +109,6 @@ public class RobotPlayer {
 		public static final int freqNumTRAININGFIELD = 318;
 		
 		public static int TOWER_HOLES_BEGIN = 2000;
-		
 	}
 	
 	public static void run(RobotController rc) {
@@ -284,7 +283,6 @@ public class RobotPlayer {
             return enemies;
         }
 
-        //TODO has defend() replaced this?
         public void attackLeastHealthEnemy(RobotInfo[] enemies) throws GameActionException {
             if (enemies.length == 0) {
                 return;
@@ -302,12 +300,10 @@ public class RobotPlayer {
             rc.attackLocation(toAttack);
         }
 
-        //TODO has defend() replaced this?
         public void attackLeastHealthEnemyInRange() throws GameActionException {
             RobotInfo[] enemies = getEnemiesInAttackingRange();
 
             if (enemies.length > 0) {
-                //attack!
                 if (rc.isWeaponReady()) {
                     attackLeastHealthEnemy(enemies);
                 }
@@ -387,7 +383,6 @@ public class RobotPlayer {
             //  The switch statement should result in an array of directions that make sense
             //for the RobotType. Safety is considered in moveOptimally()
 
-            int currentRound = Clock.getRoundNum();
             RobotType currentRobotType = rc.getType();
             Direction[] optimalDirections = null;
 
@@ -514,7 +509,6 @@ public class RobotPlayer {
         //Spawns unit based on calling type. Performs all checks.
         public void buildOptimally() throws GameActionException {
             if (rc.isCoreReady()){
-                RobotType buildType = null;
                 int round = Clock.getRoundNum();
                 double ore = rc.getTeamOre();
 
@@ -732,10 +726,7 @@ public class RobotPlayer {
         		}
         	}
         	if(suppliesToThisLocation!=null){
-        		//rc.setIndicatorString(1, "CurrRount:" + Clock.getRoundNum() + " Started Round: " + roundStart);
         		if (roundStart == Clock.getRoundNum() && transferAmount > 0) {
-        			//rc.setIndicatorString(0, "NumAllies: " + nearbyAllies.length + " Byte: " + Clock.getBytecodeNum());
-        			//rc.setIndicatorString(2, "Supplying " + (int)transferAmount + " to " + suppliesToThisLocation);
     				try {
     					rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
     				} catch(GameActionException gax) {
@@ -749,11 +740,10 @@ public class RobotPlayer {
         // false, no place in the convoy for me
         public boolean formSupplyConvoy() {
         	RobotInfo minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, myHQ);
-        	int radius = 2; // sqrt(15), the radius for supply
         	if (minerAtEdge != null && minerAtEdge.ID == rc.getID()) {
         		return true;
         	} else if (minerAtEdge == null){
-            	goToLocation(myHQ.add(myHQ.directionTo(theirHQ), radius));
+            	goToLocation(myHQ.add(myHQ.directionTo(theirHQ), smuConstants.RADIUS_FOR_SUPPLY_CONVOY));
         		return true;
         	}
         	RobotInfo previousMiner = null;
@@ -764,7 +754,7 @@ public class RobotPlayer {
 	            	if (minerAtEdge != null && minerAtEdge.ID == rc.getID()) {
 	            		return true;
 	            	} else if (minerAtEdge == null) {
-	            		goToLocation(previousMiner.location.add(previousMiner.location.directionTo(theirHQ), radius));
+	            		goToLocation(previousMiner.location.add(previousMiner.location.directionTo(theirHQ), smuConstants.RADIUS_FOR_SUPPLY_CONVOY));
 	            		return true;
 	            	}
 	            }
@@ -775,7 +765,7 @@ public class RobotPlayer {
         }
         
         public RobotInfo getUnitAtEdgeOfSupplyRangeOf(RobotType unitType, MapLocation startLocation) {
-        	MapLocation locationInChain =  startLocation.add(myHQ.directionTo(theirHQ), 2);
+        	MapLocation locationInChain =  startLocation.add(myHQ.directionTo(theirHQ), smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
         	if (rc.canSenseLocation(locationInChain)) {
         		try {
 	                return rc.senseRobotAtLocation(locationInChain);
@@ -811,7 +801,6 @@ public class RobotPlayer {
         }
         
         public boolean defend() {
-//        	defenseRallyPoint = null;
     		// A1, Protect Self
     		RobotInfo[] nearbyEnemies = getEnemiesInAttackRange();
     		if(nearbyEnemies != null && nearbyEnemies.length > 0) {
@@ -878,16 +867,14 @@ public class RobotPlayer {
     			
     			if(myType != RobotType.BEAVER && myType != RobotType.MINER) {
     				// B2, Protect Towers
-    				// TODO: Compute in advance at HQ, check Broadcasts for tower that needs units
     				MapLocation[] myTowers = rc.senseTowerLocations();
     				MapLocation closestTower = null;
                     try {
                         closestTower = getRallyPoint();
                     } catch (GameActionException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-    				int closestDist = 999999;
+    				int closestDist = Integer.MAX_VALUE;
     				for (MapLocation tower : myTowers) {
     					RobotInfo[] nearbyRobots = getTeammatesNearTower(tower);
     					if (nearbyRobots.length < smuConstants.NUM_TOWER_PROTECTORS && rc.getLocation().distanceSquaredTo(tower) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) { //tower underprotected
@@ -898,7 +885,6 @@ public class RobotPlayer {
     						}				
     					}
     				}
-    				// TODO: End compute
     				goToLocation(closestTower);
     				//System.out.println("B2: Protect Towers.");
     				return true;
@@ -962,7 +948,6 @@ public class RobotPlayer {
     	
     	// Find out if there are any holes between a teams tower and their HQ
     	public MapLocation[] computeHoles() {
-    		//System.out.println("BYTESTART: " + Clock.getBytecodeNum());
     		MapLocation[] towerLocations = rc.senseTowerLocations();
     		MapLocation[][] towerRadii = new MapLocation[towerLocations.length][];
     		for(int i = 0; i < towerLocations.length; i++) {
