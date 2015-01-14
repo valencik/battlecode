@@ -77,7 +77,6 @@ public class RobotPlayer {
 		
 		// Supply
 		public static int NUM_ROUNDS_TO_KEEP_SUPPLIED = 20;
-		
 	}
 	
 
@@ -800,8 +799,7 @@ public class RobotPlayer {
         	rc.yield();
         }
         
-        public boolean defend() {
-    		// A1, Protect Self
+        public boolean defendSelf() {
     		RobotInfo[] nearbyEnemies = getEnemiesInAttackRange();
     		if(nearbyEnemies != null && nearbyEnemies.length > 0) {
     			try {
@@ -813,7 +811,10 @@ public class RobotPlayer {
     			}
     			return true;
     		}
-    		// A2, Protect Nearby
+    		return false;
+        }
+        
+        public boolean defendTeammates() {
     		RobotInfo[] engagedRobots = getRobotsEngagedInAttack();
     		if(engagedRobots != null && engagedRobots.length>0) { // Check broadcasts for enemies that are being attacked
     			// TODO: Calculate which enemy is attacking/within range/closest to teammate
@@ -826,71 +827,93 @@ public class RobotPlayer {
     			}
     			return true;
     		}
-    		
+    		return false;
+        }
+        
+        public boolean defendTowerHoles() {
+        	int towerHoleX = -1;
+			try {
+				towerHoleX = rc.readBroadcast(smuIndices.TOWER_HOLES_BEGIN);
+			} catch (GameActionException e1) {
+				e1.printStackTrace();
+			}
+			boolean defendingHole = false;
+			if(towerHoleX != -1) {
+				int towerHolesIndex = smuIndices.TOWER_HOLES_BEGIN;
+				int towerHoleY;
+				do {
+					try {
+						towerHoleX = rc.readBroadcast(towerHolesIndex);
+						towerHolesIndex++;
+						towerHoleY = rc.readBroadcast(towerHolesIndex);
+						towerHolesIndex++;
+						if (towerHoleX != -1) {
+							MapLocation holeLocation = new MapLocation(towerHoleX, towerHoleY);
+							RobotInfo[] nearbyTeammates = rc.senseNearbyRobots(holeLocation, 5, myTeam);
+							if (nearbyTeammates.length < smuConstants.NUM_HOLE_PROTECTORS && rc.getLocation().distanceSquaredTo(holeLocation) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) {
+								defendingHole = true;
+								towerHoleX = -1;
+								goToLocation(holeLocation);    									
+							}
+						}
+					} catch (GameActionException e) {
+						e.printStackTrace();
+					}
+				} while(towerHoleX != -1);
+			}
+			return defendingHole;
+        }
+        
+        public boolean defendTowers() {
+        	MapLocation[] myTowers = rc.senseTowerLocations();
+			MapLocation closestTower = null;
+            try {
+                closestTower = getRallyPoint();
+            } catch (GameActionException e) {
+                e.printStackTrace();
+            }
+			int closestDist = Integer.MAX_VALUE;
+			for (MapLocation tower : myTowers) {
+				RobotInfo[] nearbyRobots = getTeammatesNearTower(tower);
+				if (nearbyRobots.length < smuConstants.NUM_TOWER_PROTECTORS && rc.getLocation().distanceSquaredTo(tower) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) { //tower underprotected
+					int dist = tower.distanceSquaredTo(theirHQ);
+					if (dist < closestDist) {
+						closestDist = dist;
+						closestTower = tower;
+					}				
+				}
+			}
+			goToLocation(closestTower);
+			return true;
+        }
+        
+        public boolean defend() {
+    		// A1, Protect Self
+        	boolean isProtectingSelf = defendSelf();
+        	if (isProtectingSelf) {
+        		return true;
+        	}
+        	
+        	// A2, Protect Nearby
+        	boolean isProtectingTeammates = defendTeammates();
+        	if (isProtectingTeammates) {
+        		return true;
+        	}
+
     		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
-    			int towerHoleX = -1;
-    			try {
-    				towerHoleX = rc.readBroadcast(smuIndices.TOWER_HOLES_BEGIN);
-    			} catch (GameActionException e1) {
-    				e1.printStackTrace();
-    			}
-    			boolean defendingHole = false;
-    			if(towerHoleX != -1) {
-    				// B1, Protect Holes From Other Towers
-    				// Holes to be computed once, shared in broadcast
-    				// Go to first hole with < threshold units there, or, pick one at random
-    				int towerHolesIndex = smuIndices.TOWER_HOLES_BEGIN;
-    				int towerHoleY;
-    				do {
-    					try {
-    						towerHoleX = rc.readBroadcast(towerHolesIndex);
-    						towerHolesIndex++;
-    						towerHoleY = rc.readBroadcast(towerHolesIndex);
-    						towerHolesIndex++;
-    						if (towerHoleX != -1) {
-    							MapLocation holeLocation = new MapLocation(towerHoleX, towerHoleY);
-    							RobotInfo[] nearbyTeammates = rc.senseNearbyRobots(holeLocation, 5, myTeam);
-    							if (nearbyTeammates.length < smuConstants.NUM_HOLE_PROTECTORS && rc.getLocation().distanceSquaredTo(holeLocation) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) {
-    								defendingHole = true;
-    								towerHoleX = -1;
-									goToLocation(holeLocation);    									
-    							}
-    						}
-    					} catch (GameActionException e) {
-    						e.printStackTrace();
-    					}
-    				} while(towerHoleX != -1);
-    				if (defendingHole) {
-    					return true;
-    				}
+    			// B1, Protect Holes Between Towers
+    			boolean isProtectingHoles = defendTowerHoles();
+    			if (isProtectingHoles) {
+    				return true;
     			}
     			
     			if(myType != RobotType.BEAVER && myType != RobotType.MINER) {
     				// B2, Protect Towers
-    				MapLocation[] myTowers = rc.senseTowerLocations();
-    				MapLocation closestTower = null;
-                    try {
-                        closestTower = getRallyPoint();
-                    } catch (GameActionException e) {
-                        e.printStackTrace();
-                    }
-    				int closestDist = Integer.MAX_VALUE;
-    				for (MapLocation tower : myTowers) {
-    					RobotInfo[] nearbyRobots = getTeammatesNearTower(tower);
-    					if (nearbyRobots.length < smuConstants.NUM_TOWER_PROTECTORS && rc.getLocation().distanceSquaredTo(tower) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) { //tower underprotected
-    						int dist = tower.distanceSquaredTo(theirHQ);
-    						if (dist < closestDist) {
-    							closestDist = dist;
-    							closestTower = tower;
-    						}				
-    					}
+    				boolean isProtectingTowers = defendTowers();
+    				if (isProtectingTowers) {
+    					return true;
     				}
-    				goToLocation(closestTower);
-    				//System.out.println("B2: Protect Towers.");
-    				return true;
     			}
-				// B3, Protect Other Buildings
-				// TBD
     		}
     		return false;
     	}
@@ -1192,8 +1215,16 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            //TODO Bashers can not use defend() because they cannot call attack()
-            moveToRallyPoint();
+    		boolean hasTakenAction = false;
+        	if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+    			hasTakenAction = defendTowerHoles();
+        		if (!hasTakenAction) {
+    				hasTakenAction = defendTowers();
+    			}
+    		}
+        	if (!hasTakenAction) {
+        		moveToRallyPoint();
+        	}
             transferSupplies();
             rc.yield();
         }
