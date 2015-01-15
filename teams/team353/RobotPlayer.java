@@ -1096,7 +1096,12 @@ public class RobotPlayer {
                                               (this.myHQ.y + this.theirHQ.y) / 2);
             }
             else {
-                rallyPoint = rc.senseEnemyTowerLocations()[0]; //attack!
+            	MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
+                if (enemyTowers == null || enemyTowers.length == 0) {
+                	rallyPoint = rc.senseEnemyHQLocation();
+                } else {
+                	rallyPoint = enemyTowers[0];
+                }
             }
             rc.broadcast(smuIndices.RALLY_POINT_X, rallyPoint.x);
             rc.broadcast(smuIndices.RALLY_POINT_Y, rallyPoint.y);
@@ -1168,7 +1173,7 @@ public class RobotPlayer {
     					}
     				} 		
     			}
-    		} else {
+    		} else if(!defendSelf()) {
 				if (rc.isCoreReady()) {
 					if (rc.senseOre(rc.getLocation()) > 0) {
 						rc.mine();
