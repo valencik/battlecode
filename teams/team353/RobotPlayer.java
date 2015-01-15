@@ -61,6 +61,7 @@ public class RobotPlayer {
 		public static int roundToLaunchAttack = 1600;
 		public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
 		public static int RADIUS_FOR_SUPPLY_CONVOY = 2;
+		public static int numTowersRemainingToAttackHQ = 1;
 		
 		public static int currentOreGoal = 100;
 		
@@ -1096,7 +1097,12 @@ public class RobotPlayer {
                                               (this.myHQ.y + this.theirHQ.y) / 2);
             }
             else {
-                rallyPoint = rc.senseEnemyTowerLocations()[0]; //attack!
+            	MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
+                if (enemyTowers == null || enemyTowers.length <= smuConstants.numTowersRemainingToAttackHQ) {
+                	rallyPoint = rc.senseEnemyHQLocation();
+                } else {
+                	rallyPoint = enemyTowers[0];
+                }
             }
             rc.broadcast(smuIndices.RALLY_POINT_X, rallyPoint.x);
             rc.broadcast(smuIndices.RALLY_POINT_Y, rallyPoint.y);
@@ -1168,7 +1174,7 @@ public class RobotPlayer {
     					}
     				} 		
     			}
-    		} else {
+    		} else if(!defendSelf()) {
 				if (rc.isCoreReady()) {
 					if (rc.senseOre(rc.getLocation()) > 0) {
 						rc.mine();
