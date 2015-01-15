@@ -13,14 +13,14 @@ public class RobotPlayer {
 		public static int roundToBuildBEAVER = 0;
 		public static int roundToBuildCOMMANDER = 2000;
 		public static int roundToBuildCOMPUTER = 2000;
-		public static int roundToBuildDRONE = 2000;
+		public static int roundToBuildDRONE = 50;
 		public static int roundToBuildHANDWASHSTATION = 1700;
-		public static int roundToBuildHELIPAD = 2000;
+		public static int roundToBuildHELIPAD = 1;
 		public static int roundToBuildLAUNCHER = 2000;
-		public static int roundToBuildMINER = 1;
+		public static int roundToBuildMINER = 100;
 		public static int roundToBuildMINERFACTORY = 100;
 		public static int roundToBuildMISSILE = 2000;
-		public static int roundToBuildSOLDIER = 50;
+		public static int roundToBuildSOLDIER = 200;
 		public static int roundToBuildSUPPLYDEPOT = 800;
 		public static int roundToBuildTANK = 2000;
 		public static int roundToBuildTANKFACTORY = 2000;
@@ -30,7 +30,7 @@ public class RobotPlayer {
 		public static int roundToFinishAEROSPACELAB = 2000;
 		public static int roundToFinishBARRACKS = 1500;
 		public static int roundToFinishHANDWASHSTATION = 2000;
-		public static int roundToFinishHELIPAD = 2000;
+		public static int roundToFinishHELIPAD = 800;
 		public static int roundToFinishMINERFACTORY = 2000;
 		public static int roundToFinishSUPPLYDEPOT = 1200;
 		public static int roundToFinishTANKFACTORY = 2000;
@@ -38,19 +38,19 @@ public class RobotPlayer {
 		public static int roundToFinishTRAININGFIELD = 2000;
 		
 		public static int desiredNumOfAEROSPACELAB = 0;
-		public static int desiredNumOfBARRACKS = 4;
+		public static int desiredNumOfBARRACKS = 2;
 		public static int desiredNumOfBASHER = 50;
 		public static int desiredNumOfBEAVER = 15;
 		public static int desiredNumOfCOMMANDER = 0;
 		public static int desiredNumOfCOMPUTER = 0;
-		public static int desiredNumOfDRONE = 0;
+		public static int desiredNumOfDRONE = 50;
 		public static int desiredNumOfHANDWASHSTATION = 3;
-		public static int desiredNumOfHELIPAD = 0;
+		public static int desiredNumOfHELIPAD = 4;
 		public static int desiredNumOfLAUNCHER = 0;
-		public static int desiredNumOfMINER = 70;
+		public static int desiredNumOfMINER = 30;
 		public static int desiredNumOfMINERFACTORY = 2;
 		public static int desiredNumOfMISSILE = 0;
-		public static int desiredNumOfSOLDIER = 200;
+		public static int desiredNumOfSOLDIER = 20;
 		public static int desiredNumOfSUPPLYDEPOT = 4;
 		public static int desiredNumOfTANK = 0;
 		public static int desiredNumOfTANKFACTORY = 0;
@@ -59,7 +59,7 @@ public class RobotPlayer {
 		
 		
 		public static int roundToLaunchAttack = 1600;
-		public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
+		public static int roundToFormSupplyConvoy = 1200; // roundToBuildSOLDIERS;
 		public static int RADIUS_FOR_SUPPLY_CONVOY = 2;
 		
 		public static int currentOreGoal = 100;
@@ -127,6 +127,10 @@ public class RobotPlayer {
             myself = new Soldier(rc);
         } else if (rc.getType() == RobotType.BASHER) {
             myself = new Basher(rc);
+        } else if (rc.getType() == RobotType.HELIPAD) {
+            myself = new Helipad(rc);
+        } else if (rc.getType() == RobotType.DRONE) {
+            myself = new Drone(rc);
         } else if (rc.getType() == RobotType.TOWER) {
             myself = new Tower(rc);
         } else if (rc.getType() == RobotType.SUPPLYDEPOT) {
@@ -1230,6 +1234,21 @@ public class RobotPlayer {
         }
     }
 
+    //DRONE
+    public static class Drone extends BaseBot {
+        public Drone(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            if (!defend()) {
+                moveToRallyPoint();
+            }
+            transferSupplies();
+            rc.yield();
+        }
+    }
+
     //TOWER
     public static class Tower extends BaseBot {
         public Tower(RobotController rc) {
@@ -1265,4 +1284,16 @@ public class RobotPlayer {
         }
     }
 
+    //HELIPAD
+    public static class Helipad extends BaseBot {
+        public Helipad(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            transferSupplies();
+            spawnUnit();
+            rc.yield();
+        }
+    }
 }
