@@ -61,6 +61,7 @@ public class RobotPlayer {
 		public static int roundToLaunchAttack = 1600;
 		public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
 		public static int RADIUS_FOR_SUPPLY_CONVOY = 2;
+		public static int numTowersRemainingToAttackHQ = 1;
 		
 		public static int currentOreGoal = 100;
 		
@@ -1097,7 +1098,7 @@ public class RobotPlayer {
             }
             else {
             	MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
-                if (enemyTowers == null || enemyTowers.length == 0) {
+                if (enemyTowers == null || enemyTowers.length <= smuConstants.numTowersRemainingToAttackHQ) {
                 	rallyPoint = rc.senseEnemyHQLocation();
                 } else {
                 	rallyPoint = enemyTowers[0];
