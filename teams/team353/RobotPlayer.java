@@ -134,6 +134,10 @@ public class RobotPlayer {
             myself = new Supplydepot(rc);
         } else if (rc.getType() == RobotType.HANDWASHSTATION) {
             myself = new Handwashstation(rc);
+        } else if (rc.getType() == RobotType.TANKFACTORY) {
+            myself = new Tankfactory(rc);
+        } else if (rc.getType() == RobotType.TANK) {
+            myself = new Tank(rc);
         } else {
             myself = new BaseBot(rc);
         }
@@ -1235,6 +1239,21 @@ public class RobotPlayer {
             rc.yield();
         }
     }
+    
+    //TANK
+    public static class Tank extends BaseBot {
+        public Tank(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            if (!defend()) {
+                moveToRallyPoint();
+            }
+            transferSupplies();
+            rc.yield();
+        }
+    }
 
     //TOWER
     public static class Tower extends BaseBot {
@@ -1270,5 +1289,19 @@ public class RobotPlayer {
             rc.yield();
         }
     }
+    
+    //TANKFACTORY
+    public static class Tankfactory extends BaseBot {
+        public Tankfactory(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            transferSupplies();
+            spawnUnit();
+            rc.yield();
+        }
+    }
+    
 
 }
