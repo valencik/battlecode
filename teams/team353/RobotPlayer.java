@@ -38,19 +38,19 @@ public class RobotPlayer {
 		public static int roundToFinishTRAININGFIELD = 2000;
 		
 		public static int desiredNumOfAEROSPACELAB = 0;
-		public static int desiredNumOfBARRACKS = 2;
-		public static int desiredNumOfBASHER = 50;
-		public static int desiredNumOfBEAVER = 15;
+		public static int desiredNumOfBARRACKS = 0;
+		public static int desiredNumOfBASHER = 0;
+		public static int desiredNumOfBEAVER = 3;
 		public static int desiredNumOfCOMMANDER = 0;
 		public static int desiredNumOfCOMPUTER = 0;
 		public static int desiredNumOfDRONE = 50;
 		public static int desiredNumOfHANDWASHSTATION = 3;
 		public static int desiredNumOfHELIPAD = 4;
 		public static int desiredNumOfLAUNCHER = 0;
-		public static int desiredNumOfMINER = 30;
-		public static int desiredNumOfMINERFACTORY = 2;
+		public static int desiredNumOfMINER = 0;
+		public static int desiredNumOfMINERFACTORY = 0;
 		public static int desiredNumOfMISSILE = 0;
-		public static int desiredNumOfSOLDIER = 20;
+		public static int desiredNumOfSOLDIER = 0;
 		public static int desiredNumOfSUPPLYDEPOT = 4;
 		public static int desiredNumOfTANK = 0;
 		public static int desiredNumOfTANKFACTORY = 0;
@@ -78,6 +78,10 @@ public class RobotPlayer {
 		
 		// Supply
 		public static int NUM_ROUNDS_TO_KEEP_SUPPLIED = 20;
+		
+		// Contain
+		public static int CLOCKWISE = 0;
+		public static int COUNTERCLOCKWISE = 1;
 	}
 	
 
@@ -300,8 +304,9 @@ public class RobotPlayer {
                     minEnergon = info.health;
                 }
             }
-
-            rc.attackLocation(toAttack);
+            if (toAttack != null) {
+            	rc.attackLocation(toAttack);
+            }
         }
 
         public void attackLeastHealthEnemyInRange() throws GameActionException {
@@ -404,6 +409,7 @@ public class RobotPlayer {
             case COMPUTER:
                 break;
             case DRONE:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case LAUNCHER:
                 break;
@@ -804,6 +810,124 @@ public class RobotPlayer {
         	rc.yield();
         }
         
+        public int myContainDirection = smuConstants.CLOCKWISE;
+        public MapLocation myContainPreviousLocation;
+        public void contain() {
+        	MapLocation enemyHQ = rc.senseEnemyHQLocation();
+        	MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
+        	MapLocation myLocation = rc.getLocation();
+        	int radiusFromHQ = 24;
+        	if (enemyTowers.length >= 2) {
+        		radiusFromHQ = 35;
+        	}
+        	
+        	if (myLocation.distanceSquaredTo(enemyHQ) > radiusFromHQ + 3) {
+        		// move towards the HQ
+        		try {
+	                moveOptimally();
+                } catch (GameActionException e) {
+	                e.printStackTrace();
+                }
+        	} else {
+        		MapLocation locationToGo = null;
+        		Direction directionToGo = null;
+        		if (myContainDirection == smuConstants.CLOCKWISE) {
+        			directionToGo = getClockwiseDirection(myLocation, enemyHQ);
+        		} else {
+        			directionToGo = getCounterClockwiseDirection(myLocation, enemyHQ);
+        		}
+        		locationToGo = myLocation.add(directionToGo);
+        		if (rc.isPathable(RobotType.DRONE, locationToGo)) {
+        			if (isLocationSafe(locationToGo)) {
+        				goToLocation(locationToGo);
+        			} else {
+        				Direction[] directions = breakdownDirection(directionToGo);
+        				for (int i = 0; i < directions.length; i++) {
+        					locationToGo = myLocation.add(directions[i]);
+        					if (isLocationSafe(locationToGo)) {
+        						goToLocation(locationToGo);
+        						myContainPreviousLocation = myLocation;
+        						return;
+        					}
+        				}
+        			}
+        		} else if (myContainPreviousLocation.equals(myLocation)){
+        			if (myContainDirection == smuConstants.CLOCKWISE) {
+        				myContainDirection = smuConstants.COUNTERCLOCKWISE;
+        			} else {
+        				myContainDirection = smuConstants.CLOCKWISE;
+        			}
+        		}
+        	}
+        	myContainPreviousLocation = myLocation;
+        }
+        
+        public boolean isLocationSafe(MapLocation location) {
+        	if (location.distanceSquaredTo(theirHQ) > RobotType.HQ.attackRadiusSquared) {
+        		for (MapLocation tower : rc.senseEnemyTowerLocations()) {
+        			if (location.distanceSquaredTo(tower) <= RobotType.TOWER.attackRadiusSquared) {
+        				return false;
+        			}
+        		}
+        		return true;
+        	}
+        	return false;
+        }
+        
+        public Direction[] breakdownDirection(Direction direction) {
+        	Direction[] breakdown = new Direction[2];
+        	switch(direction) {
+        		case NORTH_EAST:
+        			breakdown[0] = Direction.NORTH;
+        			breakdown[1] = Direction.EAST;
+        			break;
+        		case SOUTH_EAST:
+        			breakdown[0] = Direction.SOUTH;
+        			breakdown[1] = Direction.EAST;
+        			break;
+        		case NORTH_WEST:
+        			breakdown[0] = Direction.NORTH;
+        			breakdown[1] = Direction.WEST;
+        			break;
+        		case SOUTH_WEST:
+        			breakdown[0] = Direction.SOUTH;
+        			breakdown[1] = Direction.WEST;
+        			break;
+        		default:
+        			break;
+        	}
+        	return breakdown;
+        }
+        
+        public Direction getClockwiseDirection(MapLocation myLocation, MapLocation anchor) {
+        	Direction directionToAnchor = myLocation.directionTo(anchor);
+        	if (directionToAnchor.equals(Direction.EAST) || directionToAnchor.equals(Direction.SOUTH_EAST)) {
+        		return Direction.NORTH_EAST;
+        	} else if (directionToAnchor.equals(Direction.SOUTH) || directionToAnchor.equals(Direction.SOUTH_WEST)) {
+        		return Direction.SOUTH_EAST;
+        	} else if (directionToAnchor.equals(Direction.WEST) || directionToAnchor.equals(Direction.NORTH_WEST)) {
+        		return Direction.SOUTH_WEST;
+        	} else if (directionToAnchor.equals(Direction.NORTH) || directionToAnchor.equals(Direction.NORTH_EAST)) {
+        		return Direction.NORTH_WEST;
+        	}
+        	return Direction.NONE;
+        }
+        
+        public Direction getCounterClockwiseDirection(MapLocation myLocation, MapLocation anchor) {
+        	Direction oppositeDirection = getClockwiseDirection(myLocation, anchor);
+        	if (oppositeDirection.equals(Direction.NORTH_EAST)) {
+        		return Direction.SOUTH_WEST;
+        	} else if (oppositeDirection.equals(Direction.SOUTH_EAST)) {
+        		return Direction.NORTH_WEST;
+        	} else if (oppositeDirection.equals(Direction.SOUTH_WEST)) {
+        		return Direction.NORTH_EAST;
+        	} else if (oppositeDirection.equals(Direction.NORTH_WEST)) {
+        		return Direction.SOUTH_WEST;
+        	}
+        	return Direction.NONE;
+        }
+        
+        // Defend
         public boolean defendSelf() {
     		RobotInfo[] nearbyEnemies = getEnemiesInAttackRange();
     		if(nearbyEnemies != null && nearbyEnemies.length > 0) {
@@ -1247,9 +1371,13 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            if (!defend()) {
-                moveToRallyPoint();
-            }
+        	if (!defendSelf()) {
+        		if (Clock.getRoundNum() > 1800) {
+        			moveToRallyPoint();
+        		} else {
+        			contain();
+        		}
+        	}
             transferSupplies();
             rc.yield();
         }
