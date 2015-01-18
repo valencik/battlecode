@@ -14,7 +14,7 @@ public class RobotPlayer {
 		public static int roundToBuildCOMMANDER = 2000;
 		public static int roundToBuildCOMPUTER = 2000;
 		public static int roundToBuildDRONE = 2000;
-		public static int roundToBuildHANDWASHSTATION = 1700;
+		public static int roundToBuildHANDWASHSTATION = 1800;
 		public static int roundToBuildHQ = 2001;
 		public static int roundToBuildHELIPAD = 2000;
 		public static int roundToBuildLAUNCHER = 2000;
@@ -92,6 +92,8 @@ public class RobotPlayer {
 		
 		public static int currentOreGoal = 100;
 		
+		public static double percentBeaversToGoToSecondBase = 0.4;
+		
 		// Defence
 		public static int NUM_TOWER_PROTECTORS = 4;
 		public static int NUM_HOLE_PROTECTORS = 3;
@@ -105,6 +107,9 @@ public class RobotPlayer {
 		
 		// Supply
 		public static int NUM_ROUNDS_TO_KEEP_SUPPLIED = 20;
+
+		public static int CURRENTLY_BEING_CONTAINED = 1;
+		public static int NOT_CURRENTLY_BEING_CONTAINED = 2;
 	}
 	
 
@@ -115,6 +120,8 @@ public class RobotPlayer {
 		//Economy
 		public static int freqCurrentlySavingOre = 10;
 		public static int freqQueue = 11;
+
+		public static int HQ_BEING_CONTAINED = 20;
 		
 		public static final int freqNumAEROSPACELAB = 301;
 		public static final int freqNumBARRACKS = 302;
@@ -605,7 +612,6 @@ public class RobotPlayer {
                             wType1 = getWeightOfRobotType(IntToRobotType(type1));
                             wType2 = getWeightOfRobotType(IntToRobotType(type2));
                         } catch (GameActionException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
                         return Double.compare(wType1, wType2);
@@ -774,7 +780,46 @@ public class RobotPlayer {
             }
         	return false;
         }
+    	
+        public MapLocation getSecondBaseLocation() {
+			Direction directionToTheirHQ = myHQ.directionTo(theirHQ);
+			MapLocation secondBase = null;
+			if (directionToTheirHQ == Direction.EAST || directionToTheirHQ == Direction.WEST) {
+				secondBase = getSecondBaseLocationInDirections(Direction.NORTH, Direction.SOUTH);
+			} else if (directionToTheirHQ == Direction.NORTH || directionToTheirHQ == Direction.SOUTH) {
+				secondBase = getSecondBaseLocationInDirections(Direction.EAST, Direction.WEST);
+			} else {
+				Direction[] directions = breakdownDirection(directionToTheirHQ);
+				secondBase = getSecondBaseLocationInDirections(directions[0], directions[1]);
+			}
+			if (secondBase != null) {
+				secondBase = secondBase.add(myHQ.directionTo(secondBase), 4);
+			}
+			return secondBase;
+        }
         
+    	public MapLocation getSecondBaseLocationInDirections(Direction dir1, Direction dir2) {
+    		MapLocation towers[] = rc.senseTowerLocations();
+    		int maxDistance = Integer.MIN_VALUE;
+    		int maxDistanceIndex = -1;
+    		for (int i = 0; i<towers.length; i++) {
+    			Direction dirToTower = myHQ.directionTo(towers[i]);
+    			if (dirToTower == dir1 || dirToTower == dir2
+    					|| dirToTower == dir1.rotateLeft() || dirToTower == dir1.rotateRight()
+    					|| dirToTower == dir2.rotateLeft() || dirToTower == dir2.rotateRight()) {
+    				int distanceToTower = myHQ.distanceSquaredTo(towers[i]);
+    				if (distanceToTower > maxDistance) {
+    					maxDistance = distanceToTower;
+    					maxDistanceIndex = i;
+    				}
+    			}
+    		}
+    		if (maxDistanceIndex != -1) {
+    			return towers[maxDistanceIndex];
+    		}
+    		return null;
+    	}
+    	
         public Direction getSupplyConvoyDirection(MapLocation startLocation) {
         	Direction directionForChain = myHQ.directionTo(theirHQ);
         	if (rc.senseTerrainTile(startLocation.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY)) == TerrainTile.NORMAL) {
@@ -824,6 +869,31 @@ public class RobotPlayer {
         public void supplyAndYield() throws GameActionException {
         	transferSupplies();
         	rc.yield();
+        }
+        
+        public Direction[] breakdownDirection(Direction direction) {
+        	Direction[] breakdown = new Direction[2];
+        	switch(direction) {
+        		case NORTH_EAST:
+        			breakdown[0] = Direction.NORTH;
+        			breakdown[1] = Direction.EAST;
+        			break;
+        		case SOUTH_EAST:
+        			breakdown[0] = Direction.SOUTH;
+        			breakdown[1] = Direction.EAST;
+        			break;
+        		case NORTH_WEST:
+        			breakdown[0] = Direction.NORTH;
+        			breakdown[1] = Direction.WEST;
+        			break;
+        		case SOUTH_WEST:
+        			breakdown[0] = Direction.SOUTH;
+        			breakdown[1] = Direction.WEST;
+        			break;
+        		default:
+        			break;
+        	}
+        	return breakdown;
         }
         
         public boolean defendSelf() {
@@ -1222,38 +1292,60 @@ public class RobotPlayer {
             computeHoles();
         }
 
-        public void execute() throws GameActionException {
-            spawnOptimally();
-
-            //Broadcast rallyPoint
-            MapLocation rallyPoint = null;
-            if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
-            	MapLocation[] ourTowers = rc.senseTowerLocations();
-            	if (ourTowers != null && ourTowers.length > 0) {
-            		int closestTower = -1;
-            		int closestDistanceToEnemyHQ = Integer.MAX_VALUE;
-            		for (int i = 0; i < ourTowers.length; i++) {
-            			int currDistanceToEnemyHQ = ourTowers[i].distanceSquaredTo(theirHQ);
-            			if (currDistanceToEnemyHQ < closestDistanceToEnemyHQ) {
-            				closestDistanceToEnemyHQ = currDistanceToEnemyHQ;
-            				closestTower = i;
+        public boolean checkContainment() throws GameActionException {
+        	RobotInfo[] enemyRobotsContaining = rc.senseNearbyRobots(50, theirTeam);
+        	
+        	if (enemyRobotsContaining.length > 4) {
+        		rc.broadcast(smuIndices.HQ_BEING_CONTAINED, smuConstants.CURRENTLY_BEING_CONTAINED);
+        		return true;
+        	} else {
+        		rc.broadcast(smuIndices.HQ_BEING_CONTAINED, smuConstants.NOT_CURRENTLY_BEING_CONTAINED);
+        		return false;
+        	}
+        }
+        
+        public void setRallyPoint() throws GameActionException {
+        	MapLocation rallyPoint = null;
+        	boolean beingContained = checkContainment();
+            if (!beingContained) {
+            	if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+            		MapLocation[] ourTowers = rc.senseTowerLocations();
+            		if (ourTowers != null && ourTowers.length > 0) {
+            			int closestTower = -1;
+            			int closestDistanceToEnemyHQ = Integer.MAX_VALUE;
+            			for (int i = 0; i < ourTowers.length; i++) {
+            				int currDistanceToEnemyHQ = ourTowers[i].distanceSquaredTo(theirHQ);
+            				if (currDistanceToEnemyHQ < closestDistanceToEnemyHQ) {
+            					closestDistanceToEnemyHQ = currDistanceToEnemyHQ;
+            					closestTower = i;
+            				}
             			}
+            			rallyPoint = ourTowers[closestTower].add(ourTowers[closestTower].directionTo(theirHQ), 2);
             		}
-            		rallyPoint = ourTowers[closestTower].add(ourTowers[closestTower].directionTo(theirHQ), 2);
             	}
-            }
-            else {
-            	MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
-                if (enemyTowers == null || enemyTowers.length <= smuConstants.numTowersRemainingToAttackHQ) {
-                	rallyPoint = rc.senseEnemyHQLocation();
-                } else {
-                	rallyPoint = enemyTowers[0];
-                }
+            	else {
+            		MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
+            		if (enemyTowers == null || enemyTowers.length <= smuConstants.numTowersRemainingToAttackHQ) {
+            			rallyPoint = rc.senseEnemyHQLocation();
+            		} else {
+            			rallyPoint = enemyTowers[0];
+            		}
+            	}
+            } else {
+        		rallyPoint = getSecondBaseLocation();
+        		if (rallyPoint != null) {
+        			rallyPoint = rallyPoint.add(rallyPoint.directionTo(theirHQ), 8);
+        		}
             }
             if (rallyPoint != null) {
             	rc.broadcast(smuIndices.RALLY_POINT_X, rallyPoint.x);
             	rc.broadcast(smuIndices.RALLY_POINT_Y, rallyPoint.y);
             }
+        }
+        
+        public void execute() throws GameActionException {
+            spawnOptimally();
+            setRallyPoint();
             attackLeastHealthEnemyInRange();
             transferSupplies();
             rc.yield();
@@ -1262,13 +1354,23 @@ public class RobotPlayer {
 
     //BEAVER
     public static class Beaver extends BaseBot {
-        public Beaver(RobotController rc) {
-            super(rc);
+        public MapLocation secondBase;
+    	
+        
+    	public Beaver(RobotController rc) {
+    		super(rc);
+    		
+    		Random rand = new Random(rc.getID());
+    		if (rand.nextDouble() < smuConstants.percentBeaversToGoToSecondBase) {
+    			secondBase = getSecondBaseLocation();
+    		}
         }
 
         public void execute() throws GameActionException {
-
-            //rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
+        	if (secondBase != null && rc.getLocation().distanceSquaredTo(secondBase) > 6) {
+        		goToLocation(secondBase);
+        	}
+        	
             buildOptimally();
             transferSupplies();
             if (Clock.getRoundNum() > 400) defend();
@@ -1307,7 +1409,8 @@ public class RobotPlayer {
 
     	public void execute() throws GameActionException {
     		boolean inConvoy = false;
-    		if (Clock.getRoundNum()>smuConstants.roundToFormSupplyConvoy) {
+    		if (Clock.getRoundNum()>smuConstants.roundToFormSupplyConvoy 
+    				&& rc.readBroadcast(smuIndices.HQ_BEING_CONTAINED) != smuConstants.CURRENTLY_BEING_CONTAINED) {
     			inConvoy = formSupplyConvoy();
     		}
     		if (!inConvoy) {
@@ -1354,7 +1457,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-        	if (!defend()) {
+          	if (!defend()) {
         		moveToRallyPoint();
         	}
         	transferSupplies();
