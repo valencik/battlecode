@@ -923,6 +923,115 @@ public class RobotPlayer {
     		return false;
     	}
         
+        public int RobotTypeToInt(RobotType type){
+            switch(type) {
+            case AEROSPACELAB:
+                return 1;
+            case BARRACKS:
+                return 2;
+            case BASHER:
+                return 3;
+            case BEAVER:
+                return 4;
+            case COMMANDER:
+                return 5;
+            case COMPUTER:
+                return 6;
+            case DRONE:
+                return 7;
+            case HANDWASHSTATION:
+                return 8;
+            case HELIPAD:
+                return 9;
+            case HQ:
+                return 10;
+            case LAUNCHER:
+                return 11;
+            case MINER:
+                return 12;
+            case MINERFACTORY:
+                return 13;
+            case MISSILE:
+                return 14;
+            case SOLDIER:
+                return 15;
+            case SUPPLYDEPOT:
+                return 16;
+            case TANK:
+                return 17;
+            case TANKFACTORY:
+                return 18;
+            case TECHNOLOGYINSTITUTE:
+                return 19;
+            case TOWER:
+                return 20;
+            case TRAININGFIELD:
+                return 21;
+
+            default:
+                return -1;
+            }
+        }
+
+        public RobotType IntToRobotType(int type){
+            switch(type) {
+            case 1:
+                return RobotType.AEROSPACELAB;
+            case 2:
+                return RobotType.BARRACKS;
+            case 3:
+                return RobotType.BASHER;
+            case 4:
+                return RobotType.BEAVER;
+            case 5:
+                return RobotType.COMMANDER;
+            case 6:
+                return RobotType.COMPUTER;
+            case 7:
+                return RobotType.DRONE;
+            case 8:
+                return RobotType.HANDWASHSTATION;
+            case 9:
+                return RobotType.HELIPAD;
+            case 10:
+                return RobotType.HQ;
+            case 11:
+                return RobotType.LAUNCHER;
+            case 12:
+                return RobotType.MINER;
+            case 13:
+                return RobotType.MINERFACTORY;
+            case 14:
+                return RobotType.MISSILE;
+            case 15:
+                return RobotType.SOLDIER;
+            case 16:
+                return RobotType.SUPPLYDEPOT;
+            case 17:
+                return RobotType.TANK;
+            case 18:
+                return RobotType.TANKFACTORY;
+            case 19:
+                return RobotType.TECHNOLOGYINSTITUTE;
+            case 20:
+                return RobotType.TOWER;
+            case 21:
+                return RobotType.TRAININGFIELD;
+
+            default:
+                return null;
+            }
+        }
+        
+        //Returns a weight representing the 'need' for the RobotType
+        public double getWeightOfRobotType(RobotType type) throws GameActionException {
+            int typeInt = RobotTypeToInt(type);
+            if (smuConstants.desiredNumOf[typeInt] == 0) return 0;
+            double weight = smuConstants.roundToBuild[typeInt] + 
+                    (smuConstants.roundToFinish[typeInt] - smuConstants.roundToBuild[typeInt]) / 
+                    smuConstants.desiredNumOf[typeInt] * rc.readBroadcast(smuIndices.freqNum[typeInt]);
+            return weight;
+        }
         
     	/**
     	 *  Simple helpers, more logic for these later
