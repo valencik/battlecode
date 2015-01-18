@@ -86,7 +86,8 @@ public class RobotPlayer {
 		    desiredNumOfTECHNOLOGYINSTITUTE, desiredNumOfTOWER, desiredNumOfTRAININGFIELD};
 		
 		public static int roundToLaunchAttack = 1600;
-		public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
+		public static int roundToDefendTowers = 500;
+		public static int roundToFormSupplyConvoy = 400; // roundToBuildSOLDIERS;
 		public static int RADIUS_FOR_SUPPLY_CONVOY = 2;
 		public static int numTowersRemainingToAttackHQ = 1;
 		public static double weightExponentMagic = 0.3;
@@ -935,7 +936,9 @@ public class RobotPlayer {
         		return true;
         	}
 
-    		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+    		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack &&
+    		        Clock.getRoundNum() > smuConstants.roundToDefendTowers &&
+    		        myType != RobotType.BEAVER && myType != RobotType.MINER) {
     			// B1, Protect Holes Between Towers
     			boolean isProtectingHoles = defendTowerHoles();
     			if (isProtectingHoles) {
