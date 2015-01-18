@@ -739,22 +739,25 @@ public class RobotPlayer {
         // true, I'm in the convoy or going to be
         // false, no place in the convoy for me
         public boolean formSupplyConvoy() {
-        	RobotInfo minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, myHQ);
-        	if (minerAtEdge != null && minerAtEdge.ID == rc.getID()) {
+    		Direction directionForChain = getSupplyConvoyDirection(myHQ);
+        	RobotInfo minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, myHQ, directionForChain);
+
+        	if (minerAtEdge == null){
+            	goToLocation(myHQ.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY));
         		return true;
-        	} else if (minerAtEdge == null){
-            	goToLocation(myHQ.add(myHQ.directionTo(theirHQ), smuConstants.RADIUS_FOR_SUPPLY_CONVOY));
+        	} else if (minerAtEdge.ID == rc.getID()) {
         		return true;
         	}
         	RobotInfo previousMiner = null;
         	try {
 	            while (minerAtEdge != null && minerAtEdge.location.distanceSquaredTo(getRallyPoint()) > 4) {
+	            	directionForChain = getSupplyConvoyDirection(minerAtEdge.location);
 	            	previousMiner = minerAtEdge;
-	            	minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, minerAtEdge.location);
-	            	if (minerAtEdge != null && minerAtEdge.ID == rc.getID()) {
+	            	minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, minerAtEdge.location, directionForChain);
+	            	if (minerAtEdge == null) {
+	            		goToLocation(previousMiner.location.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY));
 	            		return true;
-	            	} else if (minerAtEdge == null) {
-	            		goToLocation(previousMiner.location.add(previousMiner.location.directionTo(theirHQ), smuConstants.RADIUS_FOR_SUPPLY_CONVOY));
+	            	} else if (minerAtEdge.ID == rc.getID()) {
 	            		return true;
 	            	}
 	            }
@@ -764,18 +767,33 @@ public class RobotPlayer {
         	return false;
         }
         
-        public RobotInfo getUnitAtEdgeOfSupplyRangeOf(RobotType unitType, MapLocation startLocation) {
-        	MapLocation locationInChain =  startLocation.add(myHQ.directionTo(theirHQ), smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
+        public Direction getSupplyConvoyDirection(MapLocation startLocation) {
+        	Direction directionForChain = myHQ.directionTo(theirHQ);
+        	if (rc.senseTerrainTile(startLocation.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY)) == TerrainTile.NORMAL) {
+        		return directionForChain;
+        	}
+        	Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+        	for (int i = 0; i < directions.length; i++) {
+        		if (directions[i] != directionForChain && directions[i] != Direction.OMNI && directions[i] != Direction.NONE 
+        				&& rc.senseTerrainTile(startLocation.add(directions[i], smuConstants.RADIUS_FOR_SUPPLY_CONVOY)) == TerrainTile.NORMAL) {
+        			return directions[i];
+        		}
+        	}
+        	return Direction.NONE;
+        }
+        
+        public RobotInfo getUnitAtEdgeOfSupplyRangeOf(RobotType unitType, MapLocation startLocation, Direction directionForChain) {
+        	MapLocation locationInChain =  startLocation.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
         	if (rc.canSenseLocation(locationInChain)) {
         		try {
-	                return rc.senseRobotAtLocation(locationInChain);
+    				 return rc.senseRobotAtLocation(locationInChain);
                 } catch (GameActionException e) {
 	                e.printStackTrace();
                 }
         	}
         	return null;
         }
-        
+
         public void beginningOfTurn() {
             if (rc.senseEnemyHQLocation() != null) {
                 this.theirHQ = rc.senseEnemyHQLocation();
