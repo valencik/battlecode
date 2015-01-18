@@ -1109,10 +1109,21 @@ public class RobotPlayer {
             spawnUnit();
 
             //Broadcast rallyPoint
-            MapLocation rallyPoint;
+            MapLocation rallyPoint = null;
             if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
-                rallyPoint = new MapLocation( (this.myHQ.x + this.theirHQ.x) / 2,
-                                              (this.myHQ.y + this.theirHQ.y) / 2);
+            	MapLocation[] ourTowers = rc.senseTowerLocations();
+            	if (ourTowers != null && ourTowers.length > 0) {
+            		int closestTower = -1;
+            		int closestDistanceToEnemyHQ = Integer.MAX_VALUE;
+            		for (int i = 0; i < ourTowers.length; i++) {
+            			int currDistanceToEnemyHQ = ourTowers[i].distanceSquaredTo(theirHQ);
+            			if (currDistanceToEnemyHQ < closestDistanceToEnemyHQ) {
+            				closestDistanceToEnemyHQ = currDistanceToEnemyHQ;
+            				closestTower = i;
+            			}
+            		}
+            		rallyPoint = ourTowers[closestTower].add(ourTowers[closestTower].directionTo(theirHQ), 2);
+            	}
             }
             else {
             	MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
@@ -1122,8 +1133,10 @@ public class RobotPlayer {
                 	rallyPoint = enemyTowers[0];
                 }
             }
-            rc.broadcast(smuIndices.RALLY_POINT_X, rallyPoint.x);
-            rc.broadcast(smuIndices.RALLY_POINT_Y, rallyPoint.y);
+            if (rallyPoint != null) {
+            	rc.broadcast(smuIndices.RALLY_POINT_X, rallyPoint.x);
+            	rc.broadcast(smuIndices.RALLY_POINT_Y, rallyPoint.y);
+            }
             attackLeastHealthEnemyInRange();
             transferSupplies();
             rc.yield();
