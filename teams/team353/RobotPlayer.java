@@ -14,7 +14,7 @@ public class RobotPlayer {
 		public static int roundToBuildCOMMANDER = 2000;
 		public static int roundToBuildCOMPUTER = 2000;
 		public static int roundToBuildDRONE = 2000;
-		public static int roundToBuildHANDWASHSTATION = 1700;
+		public static int roundToBuildHANDWASHSTATION = 1800;
 		public static int roundToBuildHQ = 2001;
 		public static int roundToBuildHELIPAD = 2000;
 		public static int roundToBuildLAUNCHER = 2000;
@@ -826,6 +826,31 @@ public class RobotPlayer {
         	rc.yield();
         }
         
+        public Direction[] breakdownDirection(Direction direction) {
+        	Direction[] breakdown = new Direction[2];
+        	switch(direction) {
+        		case NORTH_EAST:
+        			breakdown[0] = Direction.NORTH;
+        			breakdown[1] = Direction.EAST;
+        			break;
+        		case SOUTH_EAST:
+        			breakdown[0] = Direction.SOUTH;
+        			breakdown[1] = Direction.EAST;
+        			break;
+        		case NORTH_WEST:
+        			breakdown[0] = Direction.NORTH;
+        			breakdown[1] = Direction.WEST;
+        			break;
+        		case SOUTH_WEST:
+        			breakdown[0] = Direction.SOUTH;
+        			breakdown[1] = Direction.WEST;
+        			break;
+        		default:
+        			break;
+        	}
+        	return breakdown;
+        }
+        
         public boolean defendSelf() {
     		RobotInfo[] nearbyEnemies = getEnemiesInAttackRange();
     		if(nearbyEnemies != null && nearbyEnemies.length > 0) {
@@ -1262,13 +1287,55 @@ public class RobotPlayer {
 
     //BEAVER
     public static class Beaver extends BaseBot {
-        public Beaver(RobotController rc) {
-            super(rc);
+        public MapLocation secondBase;
+    	
+        
+    	public Beaver(RobotController rc) {
+    		super(rc);
+    		
+    		Random rand = new Random(rc.getID());
+    		if (rand.nextDouble() < 0.4) {
+    			Direction directionToTheirHQ = myHQ.directionTo(theirHQ);
+    			if (directionToTheirHQ == Direction.EAST || directionToTheirHQ == Direction.WEST) {
+    				secondBase = getSecondBaseLocationInDirections(Direction.NORTH, Direction.SOUTH);
+    			} else if (directionToTheirHQ == Direction.NORTH || directionToTheirHQ == Direction.SOUTH) {
+    				secondBase = getSecondBaseLocationInDirections(Direction.EAST, Direction.WEST);
+    			} else {
+    				Direction[] directions = breakdownDirection(directionToTheirHQ);
+    				secondBase = getSecondBaseLocationInDirections(directions[0], directions[1]);
+    			}
+    			if (secondBase != null) {
+    				secondBase = secondBase.add(myHQ.directionTo(secondBase), 4);
+    			}
+    		}
         }
+    	
+    	public MapLocation getSecondBaseLocationInDirections(Direction dir1, Direction dir2) {
+    		MapLocation towers[] = rc.senseTowerLocations();
+    		int maxDistance = Integer.MIN_VALUE;
+    		int maxDistanceIndex = -1;
+    		for (int i = 0; i<towers.length; i++) {
+    			Direction dirToTower = myHQ.directionTo(towers[i]);
+    			// TODO: Account for if a tower is not S or N, but SE or SW
+    			if (dirToTower == dir1 || dirToTower == dir2) {
+    				int distanceToTower = myHQ.distanceSquaredTo(towers[i]);
+    				if (distanceToTower > maxDistance) {
+    					maxDistance = distanceToTower;
+    					maxDistanceIndex = i;
+    				}
+    			}
+    		}
+    		if (maxDistanceIndex != -1) {
+    			return towers[maxDistanceIndex];
+    		}
+    		return null;
+    	}
 
         public void execute() throws GameActionException {
-
-            //rc.setIndicatorString(1, "dist:" + getDistanceSquared(this.myHQ));
+        	if (secondBase != null && rc.getLocation().distanceSquaredTo(secondBase) > 6) {
+        		goToLocation(secondBase);
+        	}
+        	
             buildOptimally();
             transferSupplies();
             if (Clock.getRoundNum() > 400) defend();
