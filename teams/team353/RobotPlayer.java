@@ -21,10 +21,10 @@ public class RobotPlayer {
 		public static int roundToBuildMINER = 1;
 		public static int roundToBuildMINERFACTORY = 10;
 		public static int roundToBuildMISSILE = 2000;
-		public static int roundToBuildSOLDIER = 50;
+		public static int roundToBuildSOLDIER = 200;
 		public static int roundToBuildSUPPLYDEPOT = 800;
-		public static int roundToBuildTANK = 2000;
-		public static int roundToBuildTANKFACTORY = 2000;
+		public static int roundToBuildTANK = 1100;
+		public static int roundToBuildTANKFACTORY = 1000;
 		public static int roundToBuildTECHNOLOGYINSTITUTE = 2000;
 		public static int roundToBuildTOWER = 2001;
 		public static int roundToBuildTRAININGFIELD = 2000;
@@ -35,7 +35,7 @@ public class RobotPlayer {
 
 		public static int roundToFinishAEROSPACELAB = 2000;
 		public static int roundToFinishBARRACKS = 1500;
-		public static int roundToFinishBASHER = 1200;
+		public static int roundToFinishBASHER = 1700;
 		public static int roundToFinishBEAVER = 0;
 		public static int roundToFinishCOMMANDER = 2000;
 		public static int roundToFinishCOMPUTER = 2000;
@@ -49,8 +49,8 @@ public class RobotPlayer {
 		public static int roundToFinishMISSILE = 2000;
 		public static int roundToFinishSOLDIER = 50;
 		public static int roundToFinishSUPPLYDEPOT = 1200;
-		public static int roundToFinishTANK = 2000;
-		public static int roundToFinishTANKFACTORY = 2000;
+		public static int roundToFinishTANK = 1800;
+		public static int roundToFinishTANKFACTORY = 1400;
 		public static int roundToFinishTECHNOLOGYINSTITUTE = 2000;
 		public static int roundToFinishTOWER = 2001;
 		public static int roundToFinishTRAININGFIELD = 2000;
@@ -62,7 +62,7 @@ public class RobotPlayer {
 		public static int desiredNumOfAEROSPACELAB = 0;
 		public static int desiredNumOfBARRACKS = 4;
 		public static int desiredNumOfBASHER = 50;
-		public static int desiredNumOfBEAVER = 15;
+		public static int desiredNumOfBEAVER = 10;
 		public static int desiredNumOfCOMMANDER = 0;
 		public static int desiredNumOfCOMPUTER = 0;
 		public static int desiredNumOfDRONE = 0;
@@ -70,13 +70,13 @@ public class RobotPlayer {
 		public static int desiredNumOfHQ = 0;
 		public static int desiredNumOfHELIPAD = 0;
 		public static int desiredNumOfLAUNCHER = 0;
-		public static int desiredNumOfMINER = 70;
+		public static int desiredNumOfMINER = 50;
 		public static int desiredNumOfMINERFACTORY = 2;
 		public static int desiredNumOfMISSILE = 0;
-		public static int desiredNumOfSOLDIER = 200;
-		public static int desiredNumOfSUPPLYDEPOT = 4;
-		public static int desiredNumOfTANK = 0;
-		public static int desiredNumOfTANKFACTORY = 0;
+		public static int desiredNumOfSOLDIER = 120;
+		public static int desiredNumOfSUPPLYDEPOT = 5;
+		public static int desiredNumOfTANK = 20;
+		public static int desiredNumOfTANKFACTORY = 2;
 		public static int desiredNumOfTECHNOLOGYINSTITUTE = 0;
 		public static int desiredNumOfTOWER = 0;
 		public static int desiredNumOfTRAININGFIELD = 0;
@@ -110,7 +110,10 @@ public class RobotPlayer {
 		
 		// Supply
 		public static int NUM_ROUNDS_TO_KEEP_SUPPLIED = 20;
-
+		
+		// Contain
+		public static int CLOCKWISE = 0;
+		public static int COUNTERCLOCKWISE = 1;
 		public static int CURRENTLY_BEING_CONTAINED = 1;
 		public static int NOT_CURRENTLY_BEING_CONTAINED = 2;
 	}
@@ -171,6 +174,10 @@ public class RobotPlayer {
             myself = new Soldier(rc);
         } else if (rc.getType() == RobotType.BASHER) {
             myself = new Basher(rc);
+        } else if (rc.getType() == RobotType.HELIPAD) {
+            myself = new Helipad(rc);
+        } else if (rc.getType() == RobotType.DRONE) {
+            myself = new Drone(rc);
         } else if (rc.getType() == RobotType.TOWER) {
             myself = new Tower(rc);
         } else if (rc.getType() == RobotType.SUPPLYDEPOT) {
@@ -343,8 +350,9 @@ public class RobotPlayer {
                     minEnergon = info.health;
                 }
             }
-
-            rc.attackLocation(toAttack);
+            if (toAttack != null) {
+            	rc.attackLocation(toAttack);
+            }
         }
 
         public void attackLeastHealthEnemyInRange() throws GameActionException {
@@ -400,7 +408,9 @@ public class RobotPlayer {
                     }
 
                     //check that we are not facing off the edge of the map
-                    if(rc.senseTerrainTile(tileInFront)!=TerrainTile.NORMAL||!tileInFrontSafe){
+                    TerrainTile terrainTileInFront = rc.senseTerrainTile(tileInFront);
+                    if(!tileInFrontSafe || terrainTileInFront == TerrainTile.OFF_MAP
+                    		|| (myType != RobotType.DRONE && terrainTileInFront!=TerrainTile.NORMAL)){
                         randomDirection = randomDirection.rotateLeft();
                     }else{
                         //try to move in the randomDirection direction
@@ -447,6 +457,7 @@ public class RobotPlayer {
             case COMPUTER:
                 break;
             case DRONE:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case LAUNCHER:
                 break;
@@ -880,6 +891,70 @@ public class RobotPlayer {
         	rc.yield();
         }
         
+        public int myContainDirection = smuConstants.CLOCKWISE;
+        public MapLocation myContainPreviousLocation;
+        public void contain() {
+        	MapLocation enemyHQ = rc.senseEnemyHQLocation();
+        	MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
+        	MapLocation myLocation = rc.getLocation();
+        	int radiusFromHQ = 24;
+        	if (enemyTowers.length >= 2) {
+        		radiusFromHQ = 35;
+        	}
+        	
+        	if (myLocation.distanceSquaredTo(enemyHQ) > radiusFromHQ + 3) {
+        		// move towards the HQ
+        		try {
+	                moveOptimally();
+                } catch (GameActionException e) {
+	                e.printStackTrace();
+                }
+        	} else {
+        		MapLocation locationToGo = null;
+        		Direction directionToGo = null;
+        		if (myContainDirection == smuConstants.CLOCKWISE) {
+        			directionToGo = getClockwiseDirection(myLocation, enemyHQ);
+        		} else {
+        			directionToGo = getCounterClockwiseDirection(myLocation, enemyHQ);
+        		}
+        		locationToGo = myLocation.add(directionToGo);
+        		if (rc.isPathable(RobotType.DRONE, locationToGo)) {
+        			if (isLocationSafe(locationToGo)) {
+        				goToLocation(locationToGo);
+        			} else {
+        				Direction[] directions = breakdownDirection(directionToGo);
+        				for (int i = 0; i < directions.length; i++) {
+        					locationToGo = myLocation.add(directions[i]);
+        					if (isLocationSafe(locationToGo)) {
+        						goToLocation(locationToGo);
+        						myContainPreviousLocation = myLocation;
+        						return;
+        					}
+        				}
+        			}
+        		} else if (myContainPreviousLocation.equals(myLocation)){
+        			if (myContainDirection == smuConstants.CLOCKWISE) {
+        				myContainDirection = smuConstants.COUNTERCLOCKWISE;
+        			} else {
+        				myContainDirection = smuConstants.CLOCKWISE;
+        			}
+        		}
+        	}
+        	myContainPreviousLocation = myLocation;
+        }
+        
+        public boolean isLocationSafe(MapLocation location) {
+        	if (location.distanceSquaredTo(theirHQ) > RobotType.HQ.attackRadiusSquared) {
+        		for (MapLocation tower : rc.senseEnemyTowerLocations()) {
+        			if (location.distanceSquaredTo(tower) <= RobotType.TOWER.attackRadiusSquared) {
+        				return false;
+        			}
+        		}
+        		return true;
+        	}
+        	return false;
+        }
+        
         public Direction[] breakdownDirection(Direction direction) {
         	Direction[] breakdown = new Direction[2];
         	switch(direction) {
@@ -905,6 +980,35 @@ public class RobotPlayer {
         	return breakdown;
         }
         
+        public Direction getClockwiseDirection(MapLocation myLocation, MapLocation anchor) {
+        	Direction directionToAnchor = myLocation.directionTo(anchor);
+        	if (directionToAnchor.equals(Direction.EAST) || directionToAnchor.equals(Direction.SOUTH_EAST)) {
+        		return Direction.NORTH_EAST;
+        	} else if (directionToAnchor.equals(Direction.SOUTH) || directionToAnchor.equals(Direction.SOUTH_WEST)) {
+        		return Direction.SOUTH_EAST;
+        	} else if (directionToAnchor.equals(Direction.WEST) || directionToAnchor.equals(Direction.NORTH_WEST)) {
+        		return Direction.SOUTH_WEST;
+        	} else if (directionToAnchor.equals(Direction.NORTH) || directionToAnchor.equals(Direction.NORTH_EAST)) {
+        		return Direction.NORTH_WEST;
+        	}
+        	return Direction.NONE;
+        }
+        
+        public Direction getCounterClockwiseDirection(MapLocation myLocation, MapLocation anchor) {
+        	Direction oppositeDirection = getClockwiseDirection(myLocation, anchor);
+        	if (oppositeDirection.equals(Direction.NORTH_EAST)) {
+        		return Direction.SOUTH_WEST;
+        	} else if (oppositeDirection.equals(Direction.SOUTH_EAST)) {
+        		return Direction.NORTH_WEST;
+        	} else if (oppositeDirection.equals(Direction.SOUTH_WEST)) {
+        		return Direction.NORTH_EAST;
+        	} else if (oppositeDirection.equals(Direction.NORTH_WEST)) {
+        		return Direction.SOUTH_WEST;
+        	}
+        	return Direction.NONE;
+        }
+        
+        // Defend
         public boolean defendSelf() {
     		RobotInfo[] nearbyEnemies = getEnemiesInAttackRange();
     		if(nearbyEnemies != null && nearbyEnemies.length > 0) {
@@ -1532,6 +1636,25 @@ public class RobotPlayer {
         }
     }
 
+    //DRONE
+    public static class Drone extends BaseBot {
+        public Drone(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+        	if (!defendSelf()) {
+        		if (Clock.getRoundNum() > 1800) {
+        			moveToRallyPoint();
+        		} else {
+        			contain();
+        		}
+        	}
+            transferSupplies();
+            rc.yield();
+        }
+    }
+
     //TOWER
     public static class Tower extends BaseBot {
         public Tower(RobotController rc) {
@@ -1581,4 +1704,16 @@ public class RobotPlayer {
     }
     
 
+    //HELIPAD
+    public static class Helipad extends BaseBot {
+        public Helipad(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            transferSupplies();
+            spawnOptimally();
+            rc.yield();
+        }
+    }
 }
