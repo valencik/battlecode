@@ -89,6 +89,7 @@ public class RobotPlayer {
 		public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
 		public static int RADIUS_FOR_SUPPLY_CONVOY = 2;
 		public static int numTowersRemainingToAttackHQ = 1;
+		public static double weightMagic = 0.3;
 		
 		public static int currentOreGoal = 100;
 		
@@ -614,13 +615,22 @@ public class RobotPlayer {
 
                 //for i in array of structures
                 for (int buildTypeInt : buildingInts) {
-                    if (round > smuConstants.roundToBuild[buildTypeInt] && rc.readBroadcast(smuIndices.freqNum[buildTypeInt]) < smuConstants.desiredNumOf[buildTypeInt]){
-                        //We don't have as many Barracks as we want...
-                        if (ore > myType.oreCost){
+                    int currentBuildNum = rc.readBroadcast(smuIndices.freqNum[buildTypeInt]);
+                    if (round > smuConstants.roundToBuild[buildTypeInt] && 
+                            smuConstants.desiredNumOf[buildTypeInt] > 0 &&
+                            smuConstants.roundToBuild[buildTypeInt] < smuConstants.roundToFinish[buildTypeInt]  &&
+                            currentBuildNum < smuConstants.desiredNumOf[buildTypeInt]){
+                        //We don't have as many buildings as we want...
+                        if (ore > IntToRobotType(buildTypeInt).oreCost){
                             buildUnit(IntToRobotType(buildTypeInt));
-                            return;
                         } else {
-                            rc.broadcast(smuIndices.freqQueue, buildTypeInt);
+                            double weightToBeat = getWeightOfRobotType(IntToRobotType(buildTypeInt));
+                            double rolled = rand.nextDouble();
+                            //System.out.println("Rolled "+ rolled + "for a " + buildTypeInt + " against " + weightToBeat);
+                            if (rolled < weightToBeat){
+                                rc.broadcast(smuIndices.freqQueue, buildTypeInt);
+                                System.out.println("Scheduled a " + IntToRobotType(buildTypeInt).name());
+                            }
                             return;
                         }
                     }
@@ -1045,13 +1055,32 @@ public class RobotPlayer {
             }
         }
         
+//        //Returns a weight representing the 'need' for the RobotType
+//        public double getWeightOfRobotType(RobotType type) throws GameActionException {
+//            int typeInt = RobotTypeToInt(type);
+//            if (smuConstants.desiredNumOf[typeInt] == 0) return 0;
+//            double weight = smuConstants.roundToBuild[typeInt] + 
+//                    (smuConstants.roundToFinish[typeInt] - smuConstants.roundToBuild[typeInt]) / 
+//                    smuConstants.desiredNumOf[typeInt] * rc.readBroadcast(smuIndices.freqNum[typeInt]);
+//            return weight;
+//        }
+        
         //Returns a weight representing the 'need' for the RobotType
         public double getWeightOfRobotType(RobotType type) throws GameActionException {
             int typeInt = RobotTypeToInt(type);
+            int round = Clock.getRoundNum();
+            double weight;
+            
+            //Return zero if unit is not desired. (Divide by zero protection)
             if (smuConstants.desiredNumOf[typeInt] == 0) return 0;
-            double weight = smuConstants.roundToBuild[typeInt] + 
-                    (smuConstants.roundToFinish[typeInt] - smuConstants.roundToBuild[typeInt]) / 
-                    smuConstants.desiredNumOf[typeInt] * rc.readBroadcast(smuIndices.freqNum[typeInt]);
+            if (smuConstants.roundToBuild[typeInt] >= smuConstants.roundToFinish[typeInt]) return 0;
+            if (round < smuConstants.roundToBuild[typeInt]) return 0;
+
+            //The weight is equal to the surface drawn by z = x^(m*y)
+            double x = (double)(round - smuConstants.roundToBuild[typeInt]) / (double) (smuConstants.roundToFinish[typeInt] - smuConstants.roundToBuild[typeInt]);
+            double y = (double)rc.readBroadcast(smuIndices.freqNum[typeInt]) / (double) smuConstants.desiredNumOf[typeInt];
+            weight = Math.pow(x, (smuConstants.weightMagic + y));
+            //System.out.println("x: " + x + " y: " + y + " weight: " + weight);
             return weight;
         }
         
