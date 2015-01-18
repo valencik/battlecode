@@ -573,135 +573,81 @@ public class RobotPlayer {
             if (rc.isCoreReady()){
                 int round = Clock.getRoundNum();
                 double ore = rc.getTeamOre();
+                boolean buildingsOutrankUnits = true;
+                int queue = rc.readBroadcast(smuIndices.freqQueue);
+                
+                //If there is something in the queue and we can not replace it, then return
+                if (queue != 0 && !buildingsOutrankUnits){
+                    return;
+                }
 
-                if (round > smuConstants.roundToBuildAEROSPACELAB && rc.readBroadcast(smuIndices.freqNumAEROSPACELAB) < smuConstants.desiredNumOfAEROSPACELAB){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 500){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.AEROSPACELAB);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildAEROSPACELAB + (smuConstants.roundToFinishAEROSPACELAB - smuConstants.roundToBuildAEROSPACELAB) / smuConstants.desiredNumOfAEROSPACELAB * rc.readBroadcast(smuIndices.freqNumAEROSPACELAB))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
+                //--- Nothing in queue or we are allowed to replace spawnUnits ---
+                
+                Integer[] buildingInts = new Integer[] {RobotTypeToInt(RobotType.AEROSPACELAB),
+                        RobotTypeToInt(RobotType.BARRACKS), RobotTypeToInt(RobotType.HANDWASHSTATION), RobotTypeToInt(RobotType.HELIPAD),
+                        RobotTypeToInt(RobotType.MINERFACTORY), RobotTypeToInt(RobotType.SUPPLYDEPOT), RobotTypeToInt(RobotType.TANKFACTORY),
+                        RobotTypeToInt(RobotType.TECHNOLOGYINSTITUTE), RobotTypeToInt(RobotType.TRAININGFIELD)};
+                
+                //Check if there is a building in queue
+                if (Arrays.asList(buildingInts).contains(queue)) {
+                    //Build it if we can afford it
+                    if (ore > IntToRobotType(queue).oreCost) buildUnit(IntToRobotType(queue));
+                    //Return either way, we can't replace buildings in the queue
+                    return;
+                }
+
+                //we should sort the array based on need
+                Arrays.sort(buildingInts, new Comparator<Integer>() {
+                    public int compare(Integer type1, Integer type2) {
+                        double wType1 = 0;
+                        double wType2 = 0;
+                        try {
+                            wType1 = getWeightOfRobotType(IntToRobotType(type1));
+                            wType2 = getWeightOfRobotType(IntToRobotType(type2));
+                        } catch (GameActionException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        return Double.compare(wType1, wType2);
+                    }
+                });
+
+                //for i in array of structures
+                for (int buildTypeInt : buildingInts) {
+                    if (round > smuConstants.roundToBuild[buildTypeInt] && rc.readBroadcast(smuIndices.freqNum[buildTypeInt]) < smuConstants.desiredNumOf[buildTypeInt]){
+                        //We don't have as many Barracks as we want...
+                        if (ore > myType.oreCost){
+                            buildUnit(IntToRobotType(buildTypeInt));
+                            return;
+                        } else {
+                            rc.broadcast(smuIndices.freqQueue, buildTypeInt);
                             return;
                         }
                     }
                 }
-                if (round > smuConstants.roundToBuildBARRACKS && rc.readBroadcast(smuIndices.freqNumBARRACKS) < smuConstants.desiredNumOfBARRACKS){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 300){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.BARRACKS);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildBARRACKS + (smuConstants.roundToFinishBARRACKS - smuConstants.roundToBuildBARRACKS) / smuConstants.desiredNumOfBARRACKS * rc.readBroadcast(smuIndices.freqNumBARRACKS))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
-                            //System.out.println("Saving Ore!!!!");
-                            return;
-                        }
-                    }
-                }
-                if (round > smuConstants.roundToBuildHANDWASHSTATION && rc.readBroadcast(smuIndices.freqNumHANDWASHSTATION) < smuConstants.desiredNumOfHANDWASHSTATION){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 200){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.HANDWASHSTATION);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildHANDWASHSTATION + (smuConstants.roundToFinishHANDWASHSTATION - smuConstants.roundToBuildHANDWASHSTATION) / smuConstants.desiredNumOfHANDWASHSTATION * rc.readBroadcast(smuIndices.freqNumHANDWASHSTATION))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
-                            return;
-                        }
-                    }
-                }
-                if (round > smuConstants.roundToBuildHELIPAD && rc.readBroadcast(smuIndices.freqNumHELIPAD) < smuConstants.desiredNumOfHELIPAD){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 300){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.HELIPAD);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildHELIPAD + (smuConstants.roundToFinishHELIPAD - smuConstants.roundToBuildHELIPAD) / smuConstants.desiredNumOfHELIPAD * rc.readBroadcast(smuIndices.freqNumHELIPAD))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
-                            return;
-                        }
-                    }
-                }
-                if (round > smuConstants.roundToBuildMINERFACTORY && rc.readBroadcast(smuIndices.freqNumMINERFACTORY) < smuConstants.desiredNumOfMINERFACTORY){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 500){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.MINERFACTORY);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildMINERFACTORY + (smuConstants.roundToFinishMINERFACTORY - smuConstants.roundToBuildMINERFACTORY) / smuConstants.desiredNumOfMINERFACTORY * rc.readBroadcast(smuIndices.freqNumMINERFACTORY))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
-                            return;
-                        }
-                    }
-                }
-                if (round > smuConstants.roundToBuildSUPPLYDEPOT && rc.readBroadcast(smuIndices.freqNumSUPPLYDEPOT) < smuConstants.desiredNumOfSUPPLYDEPOT){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 100){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.SUPPLYDEPOT);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildSUPPLYDEPOT + (smuConstants.roundToFinishSUPPLYDEPOT - smuConstants.roundToBuildSUPPLYDEPOT) / smuConstants.desiredNumOfSUPPLYDEPOT * rc.readBroadcast(smuIndices.freqNumSUPPLYDEPOT))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
-                            return;
-                        }
-                    }
-                }
-                if (round > smuConstants.roundToBuildTANKFACTORY && rc.readBroadcast(smuIndices.freqNumTANKFACTORY) < smuConstants.desiredNumOfTANKFACTORY){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 500){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.TANKFACTORY);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildTANKFACTORY + (smuConstants.roundToFinishTANKFACTORY - smuConstants.roundToBuildTANKFACTORY) / smuConstants.desiredNumOfTANKFACTORY * rc.readBroadcast(smuIndices.freqNumTANKFACTORY))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
-                            return;
-                        }
-                    }
-                }
-                if (round > smuConstants.roundToBuildTECHNOLOGYINSTITUTE && rc.readBroadcast(smuIndices.freqNumTECHNOLOGYINSTITUTE) < smuConstants.desiredNumOfTECHNOLOGYINSTITUTE){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 200){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.TECHNOLOGYINSTITUTE);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildTECHNOLOGYINSTITUTE + (smuConstants.roundToFinishTECHNOLOGYINSTITUTE - smuConstants.roundToBuildTECHNOLOGYINSTITUTE) / smuConstants.desiredNumOfTECHNOLOGYINSTITUTE * rc.readBroadcast(smuIndices.freqNumTECHNOLOGYINSTITUTE))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
-                            return;
-                        }
-                    }
-                }
-                if (round > smuConstants.roundToBuildTRAININGFIELD && rc.readBroadcast(smuIndices.freqNumTRAININGFIELD) < smuConstants.desiredNumOfTRAININGFIELD){
-                    //We don't have as many Barracks as we want...
-                    if (ore > 200){
-                        rc.broadcast(smuIndices.freqCurrentlySavingOre, 0);
-                        buildUnit(RobotType.TRAININGFIELD);
-                        return;
-                    } else {
-                        if (round > (smuConstants.roundToBuildTRAININGFIELD + (smuConstants.roundToFinishTRAININGFIELD - smuConstants.roundToBuildTRAININGFIELD) / smuConstants.desiredNumOfTRAININGFIELD * rc.readBroadcast(smuIndices.freqNumTRAININGFIELD))) {
-                            rc.broadcast(smuIndices.freqCurrentlySavingOre, 1);
-                            return;
-                        }
-                    }
-                }
+                
             }
         }
-
-        //TODO copy the work done on spawnUnit()
-        public void buildUnit(RobotType type) throws GameActionException {
-            Direction randomDir = getBuildDir(type);
-            if(rc.isCoreReady()&& randomDir != null){
-                rc.build(randomDir, type);
-                incrementCount(type);
+        
+        //Gets direction, checks delays, and builds unit
+        public boolean buildUnit(RobotType buildType) {
+            //Get a direction and then actually build the unit.
+            Direction randomDir = getBuildDir(buildType);
+            if(rc.isCoreReady() && randomDir != null){
+                try {
+                    if (rc.canBuild(randomDir, buildType)) {
+                        rc.build(randomDir, buildType);
+                        if (IntToRobotType(rc.readBroadcast(smuIndices.freqQueue)) == buildType) {
+                            rc.broadcast(smuIndices.freqQueue, 0);
+                        }
+                        incrementCount(buildType);
+                        return true;
+                    }
+                } catch (GameActionException e) {
+                    e.printStackTrace();
+                }
             }
+            return false;
         }
 
         //TODO find a way to deal with deaths.
