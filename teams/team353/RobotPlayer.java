@@ -92,6 +92,8 @@ public class RobotPlayer {
 		
 		public static int currentOreGoal = 100;
 		
+		public static double percentBeaversToGoToSecondBase = 0.4;
+		
 		// Defence
 		public static int NUM_TOWER_PROTECTORS = 4;
 		public static int NUM_HOLE_PROTECTORS = 3;
@@ -1294,7 +1296,7 @@ public class RobotPlayer {
     		super(rc);
     		
     		Random rand = new Random(rc.getID());
-    		if (rand.nextDouble() < 0.4) {
+    		if (rand.nextDouble() < smuConstants.percentBeaversToGoToSecondBase) {
     			Direction directionToTheirHQ = myHQ.directionTo(theirHQ);
     			if (directionToTheirHQ == Direction.EAST || directionToTheirHQ == Direction.WEST) {
     				secondBase = getSecondBaseLocationInDirections(Direction.NORTH, Direction.SOUTH);
