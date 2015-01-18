@@ -460,88 +460,112 @@ public class RobotPlayer {
 
         }
 
+        //Spawns or Queues the unit if it is needed
+        public boolean tryToSpawn(RobotType spawnType) throws GameActionException{
+            int round = Clock.getRoundNum();
+            double ore = rc.getTeamOre();
+            int spawnTypeInt = RobotTypeToInt(spawnType);
+            int spawnQueue = rc.readBroadcast(smuIndices.freqQueue);
+            
+            //Check if we actually need anymore spawnType units
+            if (round > smuConstants.roundToBuild[spawnTypeInt] && rc.readBroadcast(smuIndices.freqNum[spawnTypeInt]) < smuConstants.desiredNumOf[spawnTypeInt]){
+                if(ore > myType.oreCost){
+                    if (spawnUnit(spawnType)) return true;
+                } else {
+                    //Add spawnType to queue
+                    if (spawnQueue == 0){
+                        rc.broadcast(smuIndices.freqQueue, spawnTypeInt);
+                    }
+                    return false;
+                }
+            }
+            return false;
+        }
+        
         //Spawns unit based on calling type. Performs all checks.
-        public void spawnUnit() throws GameActionException {
+        public boolean spawnOptimally() throws GameActionException {
             if (rc.isCoreReady()){
-                RobotType myType = rc.getType();
-                RobotType spawnType;
-                int round = Clock.getRoundNum();
-                double ore = rc.getTeamOre();
-                //System.out.println(myType + " wants to spawn with " + ore);
+                int spawnQueue = rc.readBroadcast(smuIndices.freqQueue);
                 
+                //TODO deprecate
                 //Check if we are currently saving ore
                 if (rc.readBroadcast(smuIndices.freqCurrentlySavingOre) == 1){
-                    //System.out.println("We are saving, can't spawn.");
-                    return;
+                    System.out.println("We are saving, can't spawn.");
+                    return false;
                 }
 
                 switch(myType){
 
-                case BARRACKS:                    
-                    if (round > smuConstants.roundToBuildSOLDIER && rc.readBroadcast(smuIndices.freqNumSOLDIER) < smuConstants.desiredNumOfSOLDIER && ore > 60){
-                        spawnType = RobotType.SOLDIER;
-                        break;
-                    } else if (round > smuConstants.roundToBuildBASHER && rc.readBroadcast(smuIndices.freqNumBASHER) < smuConstants.desiredNumOfBASHER && ore > 80){
-                        spawnType = RobotType.BASHER;
-                        break;
+                case BARRACKS:
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.SOLDIER)){
+                        if (tryToSpawn(RobotType.SOLDIER)) return true;
                     }
-                    return;
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.BASHER)){
+                        if (tryToSpawn(RobotType.BASHER)) return true;
+                    }
+                    break;
                 case HQ:
-                    if (round > smuConstants.roundToBuildBEAVER && rc.readBroadcast(smuIndices.freqNumBEAVER) < smuConstants.desiredNumOfBEAVER && ore > 100){
-                        spawnType = RobotType.BEAVER;
-                        break;
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.BEAVER)){
+                        if (tryToSpawn(RobotType.BEAVER)) return true;
                     }
-                    return;
+                    break;
                 case HELIPAD:
-                    if (round > smuConstants.roundToBuildDRONE && rc.readBroadcast(smuIndices.freqNumDRONE) < smuConstants.desiredNumOfDRONE && ore > 125){
-                        spawnType = RobotType.DRONE;
-                        break;
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.DRONE)){
+                        if (tryToSpawn(RobotType.DRONE)) return true;
                     }
-                    return;
+                    break;
                 case AEROSPACELAB:
-                    if (round > smuConstants.roundToBuildLAUNCHER && rc.readBroadcast(smuIndices.freqNumLAUNCHER) < smuConstants.desiredNumOfLAUNCHER && ore > 400){
-                        spawnType = RobotType.LAUNCHER;
-                        break;
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.LAUNCHER)){
+                        if (tryToSpawn(RobotType.LAUNCHER)) return true;
                     }
-                    return;
+                    break;
                 case MINERFACTORY:
-                    if (round > smuConstants.roundToBuildMINER && rc.readBroadcast(smuIndices.freqNumMINER) < smuConstants.desiredNumOfMINER && ore > 50){
-                        spawnType = RobotType.MINER;
-                        break;
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.MINER)){
+                       if (tryToSpawn(RobotType.MINER)) return true;
                     }
-                    return;
+                    break;
                 case TANKFACTORY:
-                    if (round > smuConstants.roundToBuildTANK && rc.readBroadcast(smuIndices.freqNumTANK) < smuConstants.desiredNumOfTANK && ore > 250){
-                        spawnType = RobotType.TANK;
-                        break;
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.TANK)){
+                        if (tryToSpawn(RobotType.TANK)) return true;
                     }
-                    return;
+                    break;
                 case TECHNOLOGYINSTITUTE:
-                    if (round > smuConstants.roundToBuildCOMPUTER && rc.readBroadcast(smuIndices.freqNumCOMPUTER) < smuConstants.desiredNumOfCOMPUTER && ore > 10){
-                        spawnType = RobotType.COMPUTER;
-                        break;
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.COMPUTER)){
+                        if (tryToSpawn(RobotType.COMPUTER)) return true;
                     }
-                    return;
+                    break;
                 case TRAININGFIELD:
-                    if (round > smuConstants.roundToBuildCOMMANDER && rc.readBroadcast(smuIndices.freqNumCOMMANDER) < smuConstants.desiredNumOfCOMMANDER && ore > 100){
-                        spawnType = RobotType.COMMANDER;
-                        break;
+                    if (spawnQueue == 0 || spawnQueue == RobotTypeToInt(RobotType.COMMANDER)){
+                        if (tryToSpawn(RobotType.COMMANDER)) return true;
                     }
-                    return;
-
+                    break;
                 default:
-                    //System.out.println("ERRROR in spawnUnit()!");
-                    return;
+                    System.out.println("ERROR: No building type match found in spawnOptimally()!");
+                    return false;
                 }
+            }//isCoreReady
+            return false;
+        }
 
-                //Get a direction and then actually spawn the unit.
-                Direction randomDir = getSpawnDir(spawnType);
-                if(rc.isCoreReady()&& randomDir != null){
-                    //System.out.println("Spawning... - " + myType);
-                    rc.spawn(randomDir, spawnType);
-                    incrementCount(spawnType); 
+        //Gets direction, checks delays, and spawns unit
+        public boolean spawnUnit(RobotType spawnType) {
+            //Get a direction and then actually spawn the unit.
+            Direction randomDir = getSpawnDir(spawnType);
+            if(rc.isCoreReady() && randomDir != null){
+                try {
+                    if (rc.canSpawn(randomDir, spawnType)) {
+                        rc.spawn(randomDir, spawnType);
+                        if (IntToRobotType(rc.readBroadcast(smuIndices.freqQueue)) == spawnType) {
+                            rc.broadcast(smuIndices.freqQueue, 0);
+                        }
+                        incrementCount(spawnType);
+                        return true;
+                    }
+                } catch (GameActionException e) {
+                    e.printStackTrace();
                 }
-            } //isCoreReady
+            }
+            return false;
         }
         
         //Spawns unit based on calling type. Performs all checks.
@@ -1235,7 +1259,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            spawnUnit();
+            spawnOptimally();
 
             //Broadcast rallyPoint
             MapLocation rallyPoint;
@@ -1292,7 +1316,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
     		transferSupplies();
-            spawnUnit();
+    		spawnOptimally();
             rc.yield();
         }
     }
@@ -1341,7 +1365,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
     		transferSupplies();
-            spawnUnit();
+    		spawnOptimally();
             rc.yield();
         }
     }
@@ -1441,7 +1465,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
             transferSupplies();
-            spawnUnit();
+            spawnOptimally();
             rc.yield();
         }
     }
