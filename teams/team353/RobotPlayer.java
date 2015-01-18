@@ -89,7 +89,8 @@ public class RobotPlayer {
 		public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
 		public static int RADIUS_FOR_SUPPLY_CONVOY = 2;
 		public static int numTowersRemainingToAttackHQ = 1;
-		public static double weightMagic = 0.3;
+		public static double weightExponentMagic = 0.3;
+		public static double weightScaleMagic = 0.8;
 		
 		public static int currentOreGoal = 100;
 		
@@ -114,7 +115,6 @@ public class RobotPlayer {
 		public static int RALLY_POINT_Y = 1;
 		
 		//Economy
-		public static int freqCurrentlySavingOre = 10;
 		public static int freqQueue = 11;
 		
 		public static final int freqNumAEROSPACELAB = 301;
@@ -487,13 +487,6 @@ public class RobotPlayer {
         public boolean spawnOptimally() throws GameActionException {
             if (rc.isCoreReady()){
                 int spawnQueue = rc.readBroadcast(smuIndices.freqQueue);
-                
-                //TODO deprecate
-                //Check if we are currently saving ore
-                if (rc.readBroadcast(smuIndices.freqCurrentlySavingOre) == 1){
-                    System.out.println("We are saving, can't spawn.");
-                    return false;
-                }
 
                 switch(myType){
 
@@ -579,6 +572,7 @@ public class RobotPlayer {
                 
                 //If there is something in the queue and we can not replace it, then return
                 if (queue != 0 && !buildingsOutrankUnits){
+                    //System.out.println("Queue full, can't outrank");
                     return;
                 }
 
@@ -592,7 +586,10 @@ public class RobotPlayer {
                 //Check if there is a building in queue
                 if (Arrays.asList(buildingInts).contains(queue)) {
                     //Build it if we can afford it
-                    if (ore > IntToRobotType(queue).oreCost) buildUnit(IntToRobotType(queue));
+                    if (ore > IntToRobotType(queue).oreCost) {
+                        //System.out.println("Satisfying queue.");
+                        buildUnit(IntToRobotType(queue));
+                    }
                     //Return either way, we can't replace buildings in the queue
                     return;
                 }
@@ -629,7 +626,8 @@ public class RobotPlayer {
                             //System.out.println("Rolled "+ rolled + "for a " + buildTypeInt + " against " + weightToBeat);
                             if (rolled < weightToBeat){
                                 rc.broadcast(smuIndices.freqQueue, buildTypeInt);
-                                System.out.println("Scheduled a " + IntToRobotType(buildTypeInt).name());
+                                System.out.println("Scheduled a " + IntToRobotType(buildTypeInt).name() +
+                                        ". Need " + IntToRobotType(buildTypeInt).oreCost + " ore.");
                             }
                             return;
                         }
@@ -1079,7 +1077,7 @@ public class RobotPlayer {
             //The weight is equal to the surface drawn by z = x^(m*y)
             double x = (double)(round - smuConstants.roundToBuild[typeInt]) / (double) (smuConstants.roundToFinish[typeInt] - smuConstants.roundToBuild[typeInt]);
             double y = (double)rc.readBroadcast(smuIndices.freqNum[typeInt]) / (double) smuConstants.desiredNumOf[typeInt];
-            weight = Math.pow(x, (smuConstants.weightMagic + y));
+            weight = smuConstants.weightScaleMagic * Math.pow(x, (smuConstants.weightExponentMagic + y));
             //System.out.println("x: " + x + " y: " + y + " weight: " + weight);
             return weight;
         }
