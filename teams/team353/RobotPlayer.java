@@ -15,27 +15,49 @@ public class RobotPlayer {
 		public static int roundToBuildCOMPUTER = 2000;
 		public static int roundToBuildDRONE = 2000;
 		public static int roundToBuildHANDWASHSTATION = 1700;
+		public static int roundToBuildHQ = 2001;
 		public static int roundToBuildHELIPAD = 2000;
 		public static int roundToBuildLAUNCHER = 2000;
 		public static int roundToBuildMINER = 1;
-		public static int roundToBuildMINERFACTORY = 100;
+		public static int roundToBuildMINERFACTORY = 10;
 		public static int roundToBuildMISSILE = 2000;
 		public static int roundToBuildSOLDIER = 50;
 		public static int roundToBuildSUPPLYDEPOT = 800;
 		public static int roundToBuildTANK = 2000;
 		public static int roundToBuildTANKFACTORY = 2000;
 		public static int roundToBuildTECHNOLOGYINSTITUTE = 2000;
+		public static int roundToBuildTOWER = 2001;
 		public static int roundToBuildTRAININGFIELD = 2000;
-		
+		public static final int[] roundToBuild = new int[] {0, roundToBuildAEROSPACELAB, roundToBuildBARRACKS, roundToBuildBASHER, roundToBuildBEAVER, roundToBuildCOMMANDER, 
+		    roundToBuildCOMPUTER, roundToBuildDRONE, roundToBuildHANDWASHSTATION, roundToBuildHELIPAD, roundToBuildHQ, roundToBuildLAUNCHER, roundToBuildMINER, 
+		    roundToBuildMINERFACTORY, roundToBuildMISSILE, roundToBuildSOLDIER, roundToBuildSUPPLYDEPOT, roundToBuildTANK, roundToBuildTANKFACTORY, 
+		    roundToBuildTECHNOLOGYINSTITUTE, roundToBuildTOWER, roundToBuildTRAININGFIELD};
+
 		public static int roundToFinishAEROSPACELAB = 2000;
 		public static int roundToFinishBARRACKS = 1500;
-		public static int roundToFinishHANDWASHSTATION = 2000;
+		public static int roundToFinishBASHER = 1200;
+		public static int roundToFinishBEAVER = 0;
+		public static int roundToFinishCOMMANDER = 2000;
+		public static int roundToFinishCOMPUTER = 2000;
+		public static int roundToFinishDRONE = 2000;
+		public static int roundToFinishHANDWASHSTATION = 1700;
+		public static int roundToFinishHQ = 2001;
 		public static int roundToFinishHELIPAD = 2000;
-		public static int roundToFinishMINERFACTORY = 2000;
+		public static int roundToFinishLAUNCHER = 2000;
+		public static int roundToFinishMINER = 1;
+		public static int roundToFinishMINERFACTORY = 490;
+		public static int roundToFinishMISSILE = 2000;
+		public static int roundToFinishSOLDIER = 50;
 		public static int roundToFinishSUPPLYDEPOT = 1200;
+		public static int roundToFinishTANK = 2000;
 		public static int roundToFinishTANKFACTORY = 2000;
 		public static int roundToFinishTECHNOLOGYINSTITUTE = 2000;
+		public static int roundToFinishTOWER = 2001;
 		public static int roundToFinishTRAININGFIELD = 2000;
+		public static final int[] roundToFinish = new int[] {0, roundToFinishAEROSPACELAB, roundToFinishBARRACKS, roundToFinishBASHER, roundToFinishBEAVER, roundToFinishCOMMANDER, 
+		    roundToFinishCOMPUTER, roundToFinishDRONE, roundToFinishHANDWASHSTATION, roundToFinishHELIPAD, roundToFinishHQ, roundToFinishLAUNCHER, roundToFinishMINER, 
+		    roundToFinishMINERFACTORY, roundToFinishMISSILE, roundToFinishSOLDIER, roundToFinishSUPPLYDEPOT, roundToFinishTANK, roundToFinishTANKFACTORY, 
+		    roundToFinishTECHNOLOGYINSTITUTE, roundToFinishTOWER, roundToFinishTRAININGFIELD};
 		
 		public static int desiredNumOfAEROSPACELAB = 0;
 		public static int desiredNumOfBARRACKS = 4;
@@ -45,6 +67,7 @@ public class RobotPlayer {
 		public static int desiredNumOfCOMPUTER = 0;
 		public static int desiredNumOfDRONE = 0;
 		public static int desiredNumOfHANDWASHSTATION = 3;
+		public static int desiredNumOfHQ = 0;
 		public static int desiredNumOfHELIPAD = 0;
 		public static int desiredNumOfLAUNCHER = 0;
 		public static int desiredNumOfMINER = 70;
@@ -55,8 +78,12 @@ public class RobotPlayer {
 		public static int desiredNumOfTANK = 0;
 		public static int desiredNumOfTANKFACTORY = 0;
 		public static int desiredNumOfTECHNOLOGYINSTITUTE = 0;
+		public static int desiredNumOfTOWER = 0;
 		public static int desiredNumOfTRAININGFIELD = 0;
-		
+		public static final int[] desiredNumOf = new int[] {0, desiredNumOfAEROSPACELAB, desiredNumOfBARRACKS, desiredNumOfBASHER, desiredNumOfBEAVER, desiredNumOfCOMMANDER, 
+		    desiredNumOfCOMPUTER, desiredNumOfDRONE, desiredNumOfHANDWASHSTATION, desiredNumOfHELIPAD, desiredNumOfHQ, desiredNumOfLAUNCHER, desiredNumOfMINER, 
+		    desiredNumOfMINERFACTORY, desiredNumOfMISSILE, desiredNumOfSOLDIER, desiredNumOfSUPPLYDEPOT, desiredNumOfTANK, desiredNumOfTANKFACTORY, 
+		    desiredNumOfTECHNOLOGYINSTITUTE, desiredNumOfTOWER, desiredNumOfTRAININGFIELD};
 		
 		public static int roundToLaunchAttack = 1600;
 		public static int roundToFormSupplyConvoy = 50; // roundToBuildSOLDIERS;
@@ -87,26 +114,33 @@ public class RobotPlayer {
 		
 		//Economy
 		public static int freqCurrentlySavingOre = 10;
+		public static int freqQueue = 11;
 		
-		public static final int freqNumAEROSPACELAB = 300;
-		public static final int freqNumBARRACKS = 301;
-		public static final int freqNumBASHER = 302;
-		public static final int freqNumBEAVER = 303;
-		public static final int freqNumCOMMANDER = 304;
-		public static final int freqNumCOMPUTER = 305;
-		public static final int freqNumDRONE = 306;
-		public static final int freqNumHANDWASHSTATION = 307;
-		public static final int freqNumHELIPAD = 308;
-		public static final int freqNumLAUNCHER = 309;
-		public static final int freqNumMINER = 310;
-		public static final int freqNumMINERFACTORY = 311;
-		public static final int freqNumMISSILE = 312;
-		public static final int freqNumSOLDIER = 313;
-		public static final int freqNumSUPPLYDEPOT = 314;
-		public static final int freqNumTANK = 315;
-		public static final int freqNumTANKFACTORY = 316;
-		public static final int freqNumTECHNOLOGYINSTITUTE = 317;
-		public static final int freqNumTRAININGFIELD = 318;
+		public static final int freqNumAEROSPACELAB = 301;
+		public static final int freqNumBARRACKS = 302;
+		public static final int freqNumBASHER = 303;
+		public static final int freqNumBEAVER = 304;
+		public static final int freqNumCOMMANDER = 305;
+		public static final int freqNumCOMPUTER = 306;
+		public static final int freqNumDRONE = 307;
+		public static final int freqNumHANDWASHSTATION = 308;
+		public static final int freqNumHELIPAD = 309;
+		public static final int freqNumHQ = 310;
+		public static final int freqNumLAUNCHER = 311;
+		public static final int freqNumMINER = 312;
+		public static final int freqNumMINERFACTORY = 313;
+		public static final int freqNumMISSILE = 314;
+		public static final int freqNumSOLDIER = 315;
+		public static final int freqNumSUPPLYDEPOT = 316;
+		public static final int freqNumTANK = 317;
+		public static final int freqNumTANKFACTORY = 318;
+		public static final int freqNumTECHNOLOGYINSTITUTE = 319;
+		public static final int freqNumTOWER = 320;
+		public static final int freqNumTRAININGFIELD = 321;
+		public static final int[] freqNum = new int[] {0, freqNumAEROSPACELAB, freqNumBARRACKS, freqNumBASHER, freqNumBEAVER, freqNumCOMMANDER, 
+		    freqNumCOMPUTER, freqNumDRONE, freqNumHANDWASHSTATION, freqNumHELIPAD, freqNumHQ, freqNumLAUNCHER, freqNumMINER, 
+		    freqNumMINERFACTORY, freqNumMISSILE, freqNumSOLDIER, freqNumSUPPLYDEPOT, freqNumTANK, freqNumTANKFACTORY, 
+		    freqNumTECHNOLOGYINSTITUTE, freqNumTOWER, freqNumTRAININGFIELD};
 		
 		public static int TOWER_HOLES_BEGIN = 2000;
 	}
