@@ -362,7 +362,9 @@ public class RobotPlayer {
                     }
 
                     //check that we are not facing off the edge of the map
-                    if(rc.senseTerrainTile(tileInFront)!=TerrainTile.NORMAL||!tileInFrontSafe){
+                    TerrainTile terrainTileInFront = rc.senseTerrainTile(tileInFront);
+                    if(!tileInFrontSafe || terrainTileInFront == TerrainTile.OFF_MAP
+                    		|| (myType != RobotType.DRONE && terrainTileInFront!=TerrainTile.NORMAL)){
                         randomDirection = randomDirection.rotateLeft();
                     }else{
                         //try to move in the randomDirection direction
