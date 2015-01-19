@@ -573,10 +573,11 @@ public class RobotPlayer {
                         //We don't have as many buildings as we want...
                         if (ore > IntToRobotType(buildTypeInt).oreCost){
                             buildUnit(IntToRobotType(buildTypeInt));
+                            //System.out.println("Tried to build "+ IntToRobotType(buildTypeInt));
                         } else {
                             double weightToBeat = getWeightOfRobotType(IntToRobotType(buildTypeInt));
                             double rolled = rand.nextDouble();
-                            System.out.println("Rolled "+ rolled + "for a " + buildTypeInt + " against " + weightToBeat);
+                            //System.out.println("Rolled "+ rolled + "for a " + buildTypeInt + " against " + weightToBeat);
                             if (rolled < weightToBeat){
                                 rc.broadcast(smuIndices.freqQueue, buildTypeInt);
                                 System.out.println("Scheduled a " + IntToRobotType(buildTypeInt).name() +
@@ -1182,15 +1183,25 @@ public class RobotPlayer {
             double weight;
             
             //Return zero if unit is not desired. (Divide by zero protection)
-            if (rc.readBroadcast(smuIndices.freqDesiredNumOf + typeInt) == 0) return 0;
-            if (rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt) >= rc.readBroadcast(smuIndices.freqRoundToFinish + typeInt)) return 0;
-            if (round < rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt)) return 0;
+            //System.out.println("type: "+IntToRobotType(typeInt));
+            if (rc.readBroadcast(smuIndices.freqDesiredNumOf + typeInt) == 0) {
+                //System.out.println("Error: No desired "+IntToRobotType(typeInt));
+                return 0;
+            }
+            if (rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt) >= rc.readBroadcast(smuIndices.freqRoundToFinish + typeInt)) {
+                //System.out.println("Error: build > finish for: "+IntToRobotType(typeInt));
+                return 0;
+            }
+            if (round < rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt)) {
+                //System.out.println("Error: Too early for "+IntToRobotType(typeInt));
+                return 0;
+            }
 
             //The weight is equal to the surface drawn by z = x^(m*y)
             double x = (double)(round - rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt)) / (double) (rc.readBroadcast(smuIndices.freqRoundToFinish + typeInt) - rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt));
             double y = (double)rc.readBroadcast(smuIndices.freqNum[typeInt]) / (double) rc.readBroadcast(smuIndices.freqDesiredNumOf + typeInt);
             weight = smuConstants.weightScaleMagic * Math.pow(x, (smuConstants.weightExponentMagic + y));
-            //System.out.println("x: " + x + " y: " + y + " weight: " + weight);
+            //System.out.println("type: "+IntToRobotType(typeInt)+" x: " + x + " y: " + y + " weight: " + weight);
             return weight;
         }
         
@@ -1367,46 +1378,86 @@ public class RobotPlayer {
         }
 
         public void computeStrategy() throws GameActionException{
-            int[] roundToBuild = new int[22];
-            int[] roundToFinish = new int[22];
-            int[] desiredNumOf = new int[22];
-            //ZERO, AEROSPACELAB, BARRACKS, BASHER, BEAVER, COMMANDER, COMPUTER, DRONE, 
-            //HANDWASHSTATION, HQ, HELIPAD, LAUNCHER, MINER, MINERFACTORY, MISSILE, 
-            //SOLDIER, SUPPLYDEPOT, TANK, TANKFACTORY, TECHNOLOGYINSTITUTE, TOWER, TRAININGFIELD
+            boolean launcherStrategy = true;
+            boolean soldierBasherTankStrategy = false;
             
-            boolean launcherStrategy = false;
-            boolean soldierBasherTankStrategy = true;
-            System.out.println("Computing Strategy");
+            // [desiredNumOf, roundToBuild, roundToFinish]
+            int[] strategyAEROSPACELAB = new int[3];
+            int[] strategyBARRACKS = new int[3];
+            int[] strategyBASHER = new int[3];
+            int[] strategyBEAVER = new int[3];
+            int[] strategyCOMMANDER = new int[3];
+            int[] strategyCOMPUTER = new int[3];
+            int[] strategyDRONE = new int[3];
+            int[] strategyHANDWASHSTATION = new int[3];
+            int[] strategyHELIPAD = new int[3];
+            int[] strategyHQ = new int[3];
+            int[] strategyLAUNCHER = new int[3];
+            int[] strategyMINER = new int[3];
+            int[] strategyMINERFACTORY = new int[3];
+            int[] strategyMISSILE = new int[3];
+            int[] strategySOLDIER = new int[3];
+            int[] strategySUPPLYDEPOT = new int[3];
+            int[] strategyTANK = new int[3];
+            int[] strategyTANKFACTORY = new int[3];
+            int[] strategyTECHNOLOGYINSTITUTE = new int[3];
+            int[] strategyTOWER = new int[3];
+            int[] strategyTRAININGFIELD = new int[3];
+
             if(soldierBasherTankStrategy){
-                roundToBuild = new int[] {0, 2000, 500, 1200, 0, 2000, 2000, 2000, 1800,
-                        2001, 2000, 2000, 1, 10, 2000, 200,
-                        800, 1100, 1000, 2000, 2001, 2000};
-                roundToFinish = new int[] {0, 2000, 1500, 1700, 0, 2000, 2000, 2000,
-                        1700, 2001, 2000, 2000, 1, 490,
-                        2000, 50, 1200, 1800, 1400, 2000, 2001, 2000};
-                desiredNumOf = new int[] {0, 0, 4, 50, 10, 0, 0, 0,
-                        3, 0, 0, 0, 50, 2,
-                        0, 120, 5, 20, 2, 0, 0, 0};
+                strategyAEROSPACELAB = new int[] {0, 0, 0};
+                strategyBARRACKS = new int[] {4, 500, 1500};
+                strategyBASHER = new int[] {50, 1200, 1700};
+                strategyBEAVER = new int[] {10, 0, 0};
+                strategyCOMMANDER = new int[] {0, 0, 0};
+                strategyCOMPUTER = new int[] {0, 0, 0};
+                strategyDRONE = new int[] {0, 0, 0};
+                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
+                strategyHELIPAD = new int[] {5, 100, 400};
+                strategyHQ = new int[] {0, 0, 0};
+                strategyLAUNCHER = new int[] {0, 0, 0};
+                strategyMINER = new int[] {50, 1, 500};
+                strategyMINERFACTORY = new int[] {2, 1, 250};
+                strategyMISSILE = new int[] {0, 0, 0};
+                strategySOLDIER = new int[] {120, 200, 1200};
+                strategySUPPLYDEPOT = new int[] {5, 800, 1200};
+                strategyTANK = new int[] {20, 1100, 1800};
+                strategyTANKFACTORY = new int[] {2, 1000, 1400};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
+                strategyTOWER = new int[] {0, 0, 0};
+                strategyTRAININGFIELD = new int[] {0, 0, 0};
             }
 
             if(launcherStrategy){
-                roundToBuild = new int[] {0, 1000, 500, 1200, 0, 2000, 2000, 2000, 
-                        1700, 2001, 700, 1000, 1, 10, 2000,
-                        200, 800, 2000, 2000, 2000, 2001, 2000};
-                roundToFinish = new int[] {0, 1400, 1500, 1700, 0, 2000, 2000, 2000,
-                        1900, 2001, 900, 1700, 1, 490, 2000,
-                        50, 1200, 2000, 2000, 2000, 2001, 2000};
-                desiredNumOf = new int[] {0, 2, 4, 50, 10, 0, 0, 0,
-                        3, 0, 1, 20, 50, 2, 0,
-                        120, 5, 0, 0, 0, 0, 0};
+                strategyAEROSPACELAB = new int[] {2, 1000, 1400};
+                strategyBARRACKS = new int[] {4, 500, 1500};
+                strategyBASHER = new int[] {0, 1200, 1700};
+                strategyBEAVER = new int[] {10, 0, 0};
+                strategyCOMMANDER = new int[] {0, 0, 0};
+                strategyCOMPUTER = new int[] {0, 0, 0};
+                strategyDRONE = new int[] {0, 0, 0};
+                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
+                strategyHELIPAD = new int[] {1, 1, 600};
+                strategyHQ = new int[] {0, 0, 0};
+                strategyLAUNCHER = new int[] {20, 1100, 1700};
+                strategyMINER = new int[] {5, 1, 500};
+                strategyMINERFACTORY = new int[] {2, 1, 250};
+                strategyMISSILE = new int[] {0, 0, 0};
+                strategySOLDIER = new int[] {12, 200, 1200};
+                strategySUPPLYDEPOT = new int[] {5, 800, 1200};
+                strategyTANK = new int[] {0, 1100, 1800};
+                strategyTANKFACTORY = new int[] {0, 1000, 1400};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
+                strategyTOWER = new int[] {0, 0, 0};
+                strategyTRAININGFIELD = new int[] {0, 0, 0};
             }
             
-            if (roundToBuild.length == roundToFinish.length && roundToFinish.length == desiredNumOf.length) {
-                for (int i = 0; i < roundToBuild.length; i++) {
-                    rc.broadcast(smuIndices.freqRoundToBuild + i, roundToBuild[i]);
-                    rc.broadcast(smuIndices.freqRoundToFinish + i, roundToFinish[i]);
-                    rc.broadcast(smuIndices.freqDesiredNumOf + i, desiredNumOf[i]);
-                }
+            int[][] strategyArray = new int[][] {strategyAEROSPACELAB, strategyBARRACKS, strategyBASHER, strategyBEAVER, strategyCOMMANDER, strategyCOMPUTER, strategyDRONE, strategyHANDWASHSTATION, strategyHELIPAD, strategyHQ, strategyLAUNCHER, strategyMINER, strategyMINERFACTORY, strategyMISSILE, strategySOLDIER, strategySUPPLYDEPOT, strategyTANK, strategyTANKFACTORY, strategyTECHNOLOGYINSTITUTE, strategyTOWER, strategyTRAININGFIELD};
+
+            for (int i = 1; i < strategyArray.length; i++) {
+                rc.broadcast(smuIndices.freqDesiredNumOf + i, strategyArray[i-1][0]);
+                rc.broadcast(smuIndices.freqRoundToBuild + i, strategyArray[i-1][1]);
+                rc.broadcast(smuIndices.freqRoundToFinish + i, strategyArray[i-1][2]);
             }
         }
         
