@@ -1656,7 +1656,7 @@ public class RobotPlayer {
         public void setRallyPoint() throws GameActionException {
         	MapLocation rallyPoint = null;
         	RobotType beingContained = checkContainment();
-            if (beingContained != null) {
+            if (beingContained == null) {
             	if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
             		MapLocation[] ourTowers = rc.senseTowerLocations();
             		if (ourTowers != null && ourTowers.length > 0) {
@@ -1671,8 +1671,7 @@ public class RobotPlayer {
             			}
             			rallyPoint = ourTowers[closestTower].add(ourTowers[closestTower].directionTo(theirHQ), 2);
             		}
-            	}
-            	else {
+            	} else {
             		MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
             		if (enemyTowers == null || enemyTowers.length <= smuConstants.numTowersRemainingToAttackHQ) {
             			rallyPoint = rc.senseEnemyHQLocation();
