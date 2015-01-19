@@ -1419,7 +1419,7 @@ public class RobotPlayer {
         public boolean isFinished = false;
         public boolean analyzedTowers = false;
         
-        public int strategy; // 0 = "defend", 1 = "build drones", 2 = "build soldiers"
+        public int strategy;
     	
     	public HQ(RobotController rc) {
             super(rc);
