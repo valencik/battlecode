@@ -116,6 +116,14 @@ public class RobotPlayer {
 		public static int COUNTERCLOCKWISE = 1;
 		public static int CURRENTLY_BEING_CONTAINED = 1;
 		public static int NOT_CURRENTLY_BEING_CONTAINED = 2;
+		
+		// Strategies
+		public static int STRATEGY_DRONE_CONTAIN = 1;
+		public static int STRATEGY_TANKS_AND_SOLDIERS = 2;
+		public static int STRATEGY_DRONE_SWARM = 3;
+		public static int STRATEGY_TANKS_AND_LAUNCHERS = 4;
+		public static int STRATEGY_LAUNCHERS = 5;
+		public static int STRATEGY_TANK_SWARM =6;
 	}
 	
 
@@ -126,7 +134,9 @@ public class RobotPlayer {
 		//Economy
 		public static int freqQueue = 11;
 
+		public static int STRATEGY = 19;
 		public static int HQ_BEING_CONTAINED = 20;
+		public static int HQ_BEING_CONTAINED_BY = 21;
 		
 		public static final int freqNumAEROSPACELAB = 301;
 		public static final int freqNumBARRACKS = 302;
@@ -1450,27 +1460,165 @@ public class RobotPlayer {
 
     //HQ
     public static class HQ extends BaseBot {
-        public HQ(RobotController rc) {
+        public int xMin, xMax, yMin, yMax;
+        public int xpos, ypos;
+        public int totalNormal, totalVoid, totalProcessed;
+        public int towerThreat;
+
+        public static double ratio;
+        public boolean isFinished = false;
+        public boolean analyzedTowers = false;
+        
+        public int strategy; // 0 = "defend", 1 = "build drones", 2 = "build soldiers"
+    	
+    	public HQ(RobotController rc) {
             super(rc);
+            
+            xMin = Math.min(this.myHQ.x, this.theirHQ.x);
+            xMax = Math.max(this.myHQ.x, this.theirHQ.x);
+            yMin = Math.min(this.myHQ.y, this.theirHQ.y);
+            yMax = Math.max(this.myHQ.y, this.theirHQ.y);
+
+            xpos = xMin;
+            ypos = yMin;
+            
+            totalNormal = totalVoid = totalProcessed = 0;
+            towerThreat = 0;
+            strategy = 0;
+            isFinished = false;
+            
             computeHoles();
         }
+    	
+    	public void analyzeMap() {
+            while (ypos < yMax + 1) {
+                TerrainTile t = rc.senseTerrainTile(new MapLocation(xpos, ypos));
 
-        public boolean checkContainment() throws GameActionException {
+                if (t == TerrainTile.NORMAL) {
+                    totalNormal++;
+                    totalProcessed++;
+                }
+                else if (t == TerrainTile.VOID) {
+                    totalVoid++;
+                    totalProcessed++;
+                }
+                xpos++;
+                if (xpos == xMax + 1) {
+                    xpos = xMin;
+                    ypos++;
+                }
+
+                if (Clock.getBytecodesLeft() < 50) {
+                    return;
+                }
+            }
+            ratio = (double) totalNormal / totalProcessed;
+            isFinished = true;
+        }
+    	
+        public void analyzeTowers() {
+            MapLocation[] towers = rc.senseEnemyTowerLocations();
+            towerThreat = 0;
+
+            for (int i=0; i<towers.length; ++i) {
+                MapLocation towerLoc = towers[i];
+
+                if ((xMin <= towerLoc.x && towerLoc.x <= xMax && yMin <= towerLoc.y && towerLoc.y <= yMax) || towerLoc.distanceSquaredTo(this.theirHQ) <= 50) {
+                    for (int j=0; j<towers.length; ++j) {
+                        if (towers[j].distanceSquaredTo(towerLoc) <= 50) {
+                            towerThreat++;
+                        }
+                    }
+                }
+            }
+            analyzedTowers = true;
+        }
+
+        public void chooseStrategy() throws GameActionException {
+            if (rc.readBroadcast(smuIndices.HQ_BEING_CONTAINED) == smuConstants.NOT_CURRENTLY_BEING_CONTAINED) {
+            	// Test for Swarms
+        		MapLocation[] ourTowers = rc.senseTowerLocations();
+        		RobotType swarmingType = null;
+        		if (ourTowers != null && ourTowers.length > 0) {
+        			int closestTower = -1;
+        			int closestDistanceToEnemyHQ = Integer.MAX_VALUE;
+        			for (int i = 0; i < ourTowers.length; i++) {
+        				int currDistanceToEnemyHQ = ourTowers[i].distanceSquaredTo(theirHQ);
+        				if (currDistanceToEnemyHQ < closestDistanceToEnemyHQ) {
+        					closestDistanceToEnemyHQ = currDistanceToEnemyHQ;
+        					closestTower = i;
+        				}
+        			}
+        			RobotInfo[] enemiesSwarming = rc.senseNearbyRobots(ourTowers[closestTower], 100, theirTeam);
+        			if (enemiesSwarming != null && enemiesSwarming.length > 0) {
+        				swarmingType = IntToRobotType(getMajorityRobotType(enemiesSwarming));
+        			}
+        		}
+            	
+        		if (ratio <= 0.85) {
+        			// Void heavy map
+        			if (towerThreat >= 10) {
+        				// Defensive Map
+            			strategy = smuConstants.STRATEGY_DRONE_SWARM;
+        			} else {
+        				// Offensive Map
+            			strategy = smuConstants.STRATEGY_DRONE_CONTAIN;
+        			}
+        		} else {
+        			// Traversable Map
+        			if (swarmingType == RobotType.SOLDIER) {
+        				strategy = smuConstants.STRATEGY_TANKS_AND_LAUNCHERS;
+        			} else if (swarmingType == RobotType.DRONE) {
+        				strategy = smuConstants.STRATEGY_LAUNCHERS;
+        			} else if (swarmingType == RobotType.TANK) {
+        				strategy = smuConstants.STRATEGY_TANK_SWARM;
+        			} else {
+        				strategy = smuConstants.STRATEGY_TANKS_AND_SOLDIERS;
+        			}
+        		}
+            } else {
+            	RobotType containingType = IntToRobotType(rc.readBroadcast(smuIndices.HQ_BEING_CONTAINED_BY));
+            	if (containingType == RobotType.DRONE) {
+            		strategy = smuConstants.STRATEGY_LAUNCHERS;
+            	} else if (containingType == RobotType.TANK) {
+            		strategy = smuConstants.STRATEGY_LAUNCHERS;
+            	}
+            }
+            rc.broadcast(smuIndices.STRATEGY, strategy);
+        }
+
+        public RobotType checkContainment() throws GameActionException {
         	RobotInfo[] enemyRobotsContaining = rc.senseNearbyRobots(50, theirTeam);
-        	
         	if (enemyRobotsContaining.length > 4) {
         		rc.broadcast(smuIndices.HQ_BEING_CONTAINED, smuConstants.CURRENTLY_BEING_CONTAINED);
-        		return true;
+        		int robotTypeContaining = getMajorityRobotType(enemyRobotsContaining);
+        		rc.broadcast(smuIndices.HQ_BEING_CONTAINED_BY, robotTypeContaining);
+        		return IntToRobotType(robotTypeContaining);
         	} else {
         		rc.broadcast(smuIndices.HQ_BEING_CONTAINED, smuConstants.NOT_CURRENTLY_BEING_CONTAINED);
-        		return false;
+        		return null;
         	}
+        }
+        
+        public int getMajorityRobotType(RobotInfo[] enemyRobots) {
+        	int[] enemyRobotTypes = new int[22]; //Max RobotType -> int value + 1  
+        	int highestValue = 0;
+    		int highestValueIndex = -1;
+    		for (int i = 0; i < enemyRobots.length; i++) {
+    			int robotType = RobotTypeToInt(enemyRobots[i].type);
+    			enemyRobotTypes[robotType] = enemyRobotTypes[robotType] + 1;
+    			if (enemyRobotTypes[robotType] > highestValue) {
+    				highestValue = enemyRobotTypes[robotType];
+    				highestValueIndex = i;
+    			}
+    		}
+    		return highestValueIndex;
         }
         
         public void setRallyPoint() throws GameActionException {
         	MapLocation rallyPoint = null;
-        	boolean beingContained = checkContainment();
-            if (!beingContained) {
+        	RobotType beingContained = checkContainment();
+            if (beingContained != null) {
             	if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
             		MapLocation[] ourTowers = rc.senseTowerLocations();
             		if (ourTowers != null && ourTowers.length > 0) {
@@ -1511,6 +1659,16 @@ public class RobotPlayer {
             setRallyPoint();
             attackLeastHealthEnemyInRange();
             transferSupplies();
+            
+            if (!isFinished) {
+            	analyzeMap();
+            	if (!analyzedTowers) {
+            		analyzeTowers();
+            	}
+            } else {
+            	chooseStrategy();
+            }
+            
             rc.yield();
         }
     }
