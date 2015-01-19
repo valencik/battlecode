@@ -1456,7 +1456,6 @@ public class RobotPlayer {
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             }
-
             if(launcherStrategy){
                 strategyAEROSPACELAB = new int[] {2, 1000, 1400};
                 strategyBARRACKS = new int[] {4, 500, 1500};
@@ -1469,11 +1468,11 @@ public class RobotPlayer {
                 strategyHELIPAD = new int[] {1, 1, 600};
                 strategyHQ = new int[] {0, 0, 0};
                 strategyLAUNCHER = new int[] {20, 1100, 1700};
-                strategyMINER = new int[] {5, 1, 500};
+                strategyMINER = new int[] {30, 1, 500};
                 strategyMINERFACTORY = new int[] {2, 1, 250};
                 strategyMISSILE = new int[] {0, 0, 0};
-                strategySOLDIER = new int[] {12, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {5, 800, 1200};
+                strategySOLDIER = new int[] {120, 200, 1200};
+                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
                 strategyTANK = new int[] {0, 1100, 1800};
                 strategyTANKFACTORY = new int[] {0, 1000, 1400};
                 strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
