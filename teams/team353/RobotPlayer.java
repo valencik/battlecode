@@ -7,7 +7,7 @@ import java.util.*;
 public class RobotPlayer {
 
 	public static class smuConstants {
-		public static int roundToBuildAEROSPACELAB = 2000;
+		public static int roundToBuildAEROSPACELAB = 1000;
 		public static int roundToBuildBARRACKS = 500;
 		public static int roundToBuildBASHER = 1200;
 		public static int roundToBuildBEAVER = 0;
@@ -16,15 +16,15 @@ public class RobotPlayer {
 		public static int roundToBuildDRONE = 2000;
 		public static int roundToBuildHANDWASHSTATION = 1800;
 		public static int roundToBuildHQ = 2001;
-		public static int roundToBuildHELIPAD = 2000;
-		public static int roundToBuildLAUNCHER = 2000;
+		public static int roundToBuildHELIPAD = 900;
+		public static int roundToBuildLAUNCHER = 1000;
 		public static int roundToBuildMINER = 1;
 		public static int roundToBuildMINERFACTORY = 10;
 		public static int roundToBuildMISSILE = 2000;
 		public static int roundToBuildSOLDIER = 200;
 		public static int roundToBuildSUPPLYDEPOT = 800;
-		public static int roundToBuildTANK = 1100;
-		public static int roundToBuildTANKFACTORY = 1000;
+		public static int roundToBuildTANK = 21100;
+		public static int roundToBuildTANKFACTORY = 21000;
 		public static int roundToBuildTECHNOLOGYINSTITUTE = 2000;
 		public static int roundToBuildTOWER = 2001;
 		public static int roundToBuildTRAININGFIELD = 2000;
@@ -33,7 +33,7 @@ public class RobotPlayer {
 		    roundToBuildMINERFACTORY, roundToBuildMISSILE, roundToBuildSOLDIER, roundToBuildSUPPLYDEPOT, roundToBuildTANK, roundToBuildTANKFACTORY, 
 		    roundToBuildTECHNOLOGYINSTITUTE, roundToBuildTOWER, roundToBuildTRAININGFIELD};
 
-		public static int roundToFinishAEROSPACELAB = 2000;
+		public static int roundToFinishAEROSPACELAB = 1400;
 		public static int roundToFinishBARRACKS = 1500;
 		public static int roundToFinishBASHER = 1700;
 		public static int roundToFinishBEAVER = 0;
@@ -42,15 +42,15 @@ public class RobotPlayer {
 		public static int roundToFinishDRONE = 2000;
 		public static int roundToFinishHANDWASHSTATION = 1700;
 		public static int roundToFinishHQ = 2001;
-		public static int roundToFinishHELIPAD = 2000;
-		public static int roundToFinishLAUNCHER = 2000;
+		public static int roundToFinishHELIPAD = 1000;
+		public static int roundToFinishLAUNCHER = 1700;
 		public static int roundToFinishMINER = 1;
 		public static int roundToFinishMINERFACTORY = 490;
 		public static int roundToFinishMISSILE = 2000;
 		public static int roundToFinishSOLDIER = 50;
 		public static int roundToFinishSUPPLYDEPOT = 1200;
-		public static int roundToFinishTANK = 1800;
-		public static int roundToFinishTANKFACTORY = 1400;
+		public static int roundToFinishTANK = 21800;
+		public static int roundToFinishTANKFACTORY = 21400;
 		public static int roundToFinishTECHNOLOGYINSTITUTE = 2000;
 		public static int roundToFinishTOWER = 2001;
 		public static int roundToFinishTRAININGFIELD = 2000;
@@ -59,7 +59,7 @@ public class RobotPlayer {
 		    roundToFinishMINERFACTORY, roundToFinishMISSILE, roundToFinishSOLDIER, roundToFinishSUPPLYDEPOT, roundToFinishTANK, roundToFinishTANKFACTORY, 
 		    roundToFinishTECHNOLOGYINSTITUTE, roundToFinishTOWER, roundToFinishTRAININGFIELD};
 		
-		public static int desiredNumOfAEROSPACELAB = 0;
+		public static int desiredNumOfAEROSPACELAB = 2;
 		public static int desiredNumOfBARRACKS = 4;
 		public static int desiredNumOfBASHER = 50;
 		public static int desiredNumOfBEAVER = 10;
@@ -68,15 +68,15 @@ public class RobotPlayer {
 		public static int desiredNumOfDRONE = 0;
 		public static int desiredNumOfHANDWASHSTATION = 3;
 		public static int desiredNumOfHQ = 0;
-		public static int desiredNumOfHELIPAD = 0;
-		public static int desiredNumOfLAUNCHER = 0;
+		public static int desiredNumOfHELIPAD = 1;
+		public static int desiredNumOfLAUNCHER = 20;
 		public static int desiredNumOfMINER = 50;
 		public static int desiredNumOfMINERFACTORY = 2;
 		public static int desiredNumOfMISSILE = 0;
 		public static int desiredNumOfSOLDIER = 120;
 		public static int desiredNumOfSUPPLYDEPOT = 5;
-		public static int desiredNumOfTANK = 20;
-		public static int desiredNumOfTANKFACTORY = 2;
+		public static int desiredNumOfTANK = 0;
+		public static int desiredNumOfTANKFACTORY = 0;
 		public static int desiredNumOfTECHNOLOGYINSTITUTE = 0;
 		public static int desiredNumOfTOWER = 0;
 		public static int desiredNumOfTRAININGFIELD = 0;
@@ -188,6 +188,12 @@ public class RobotPlayer {
             myself = new Tankfactory(rc);
         } else if (rc.getType() == RobotType.TANK) {
             myself = new Tank(rc);
+        } else if (rc.getType() == RobotType.AEROSPACELAB) {
+            myself = new Aerospacelab(rc);
+        } else if (rc.getType() == RobotType.LAUNCHER) {
+            myself = new Launcher(rc);
+        } else if (rc.getType() == RobotType.MISSILE) {
+            myself = new Missile(rc);
         } else {
             myself = new BaseBot(rc);
         }
@@ -1304,6 +1310,10 @@ public class RobotPlayer {
     		}
     		return null;
     	}
+    	
+        public RobotInfo[] getTeammatesInAttackRange() {
+            return rc.senseNearbyRobots(myRange, myTeam);
+        }
 
     	public RobotInfo[] getTeammatesNearTower(MapLocation towerLocation) {
     		return rc.senseNearbyRobots(towerLocation, RobotType.TOWER.attackRadiusSquared, myTeam);
@@ -1703,7 +1713,6 @@ public class RobotPlayer {
         }
     }
     
-
     //HELIPAD
     public static class Helipad extends BaseBot {
         public Helipad(RobotController rc) {
@@ -1713,6 +1722,54 @@ public class RobotPlayer {
         public void execute() throws GameActionException {
             transferSupplies();
             spawnOptimally();
+            rc.yield();
+        }
+    }
+    
+    //AEROSPACELAB
+    public static class Aerospacelab extends BaseBot {
+        public Aerospacelab(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            transferSupplies();
+            spawnOptimally();
+            rc.yield();
+        }
+    }
+    
+    //LAUNCHER
+    public static class Launcher extends BaseBot {
+        public Launcher(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            if (Clock.getRoundNum() > smuConstants.roundToLaunchAttack && rc.getMissileCount() > 0) {
+                Direction targetDir = getMoveDir(theirHQ);
+                if (targetDir != null && rc.isWeaponReady()){
+                    if (rc.canLaunch(targetDir)){
+                        rc.launchMissile(getMoveDir(theirHQ));
+                    }
+                }
+            }
+            moveToRallyPoint();
+            rc.yield();
+        }
+    }
+    
+    //MISSILE
+    public static class Missile extends BaseBot {
+        public Missile(RobotController rc) {
+            super(rc);
+        }
+
+        public void execute() throws GameActionException {
+            moveToRallyPoint();
+            if (getTeammatesInAttackRange().length <= 1 && getTeammatesInAttackRange().length > 4){
+                rc.explode();
+            }
             rc.yield();
         }
     }
