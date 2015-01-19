@@ -1407,8 +1407,8 @@ public class RobotPlayer {
         }
 
         public void computeStrategy() throws GameActionException{
-            boolean launcherStrategy = true;
-            boolean soldierBasherTankStrategy = false;
+            boolean launcherStrategy = false;
+            boolean soldierBasherTankStrategy = true;
             
             // [desiredNumOf, roundToBuild, roundToFinish]
             int[] strategyAEROSPACELAB = new int[3];
@@ -1442,14 +1442,14 @@ public class RobotPlayer {
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {0, 0, 0};
                 strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {5, 100, 400};
+                strategyHELIPAD = new int[] {0, 0, 0};
                 strategyHQ = new int[] {0, 0, 0};
                 strategyLAUNCHER = new int[] {0, 0, 0};
                 strategyMINER = new int[] {50, 1, 500};
                 strategyMINERFACTORY = new int[] {2, 1, 250};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {120, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {5, 800, 1200};
+                strategySUPPLYDEPOT = new int[] {10, 700, 1400};
                 strategyTANK = new int[] {20, 1100, 1800};
                 strategyTANKFACTORY = new int[] {2, 1000, 1400};
                 strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
