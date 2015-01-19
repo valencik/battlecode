@@ -370,11 +370,15 @@ public class RobotPlayer {
                 int rallyX = rc.readBroadcast(smuIndices.RALLY_POINT_X);
                 int rallyY = rc.readBroadcast(smuIndices.RALLY_POINT_Y);
                 MapLocation rallyPoint = new MapLocation(rallyX, rallyY);
-
-                Direction newDir = getMoveDir(rallyPoint);
-
-                if (newDir != null) {
-                    rc.move(newDir);
+                
+                RobotInfo[] robots = rc.senseNearbyRobots(rallyPoint, 10, myTeam);
+                if (Clock.getRoundNum() > smuConstants.roundToLaunchAttack 
+                		|| rc.getLocation().distanceSquaredTo(rallyPoint) > 8 + Clock.getRoundNum() / 100) {
+                	Direction newDir = getMoveDir(rallyPoint);
+                	
+                	if (newDir != null) {
+                		rc.move(newDir);
+                	}
                 }
             }
 
@@ -753,7 +757,7 @@ public class RobotPlayer {
         	double transferAmount = 0;
         	MapLocation suppliesToThisLocation = null;
         	for(RobotInfo ri:nearbyAllies){
-        			if (ri.supplyLevel < lowestSupply) {
+        			if (!ri.type.isBuilding && ri.supplyLevel < lowestSupply) {
         					lowestSupply = ri.supplyLevel;
     						transferAmount = (rc.getSupplyLevel()-ri.supplyLevel)/2;        				
         					suppliesToThisLocation = ri.location;
@@ -784,7 +788,7 @@ public class RobotPlayer {
         	}
         	RobotInfo previousMiner = null;
         	try {
-	            while (minerAtEdge != null && minerAtEdge.location.distanceSquaredTo(getRallyPoint()) > 4) {
+	            while ((minerAtEdge != null || !minerAtEdge.type.isBuilding) && minerAtEdge.location.distanceSquaredTo(getRallyPoint()) > 4) {
 	            	directionForChain = getSupplyConvoyDirection(minerAtEdge.location);
 	            	previousMiner = minerAtEdge;
 	            	minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, minerAtEdge.location, directionForChain);
@@ -799,6 +803,51 @@ public class RobotPlayer {
 	            e.printStackTrace();
             }
         	return false;
+        }
+        
+        public Direction getSupplyConvoyDirection(MapLocation startLocation) {
+        	Direction directionForChain = myHQ.directionTo(theirHQ);
+        	MapLocation locationToGo = startLocation.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
+        	if (rc.senseTerrainTile(locationToGo) == TerrainTile.NORMAL) {
+                RobotInfo robotInDirection;
+                try {
+	                robotInDirection = rc.senseRobotAtLocation(locationToGo);
+	                if (robotInDirection == null || !robotInDirection.type.isBuilding) {
+	                	return directionForChain;
+	                }
+                } catch (GameActionException e) {
+	                e.printStackTrace();
+                }
+        	}
+        	Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+        	for (int i = 0; i < directions.length; i++) {
+        		locationToGo = startLocation.add(directions[i], smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
+        		if (directions[i] != directionForChain && directions[i] != Direction.OMNI && directions[i] != Direction.NONE 
+        				&& rc.senseTerrainTile(locationToGo) == TerrainTile.NORMAL) {
+        			RobotInfo robotInDirection;
+                    try {
+	                    robotInDirection = rc.senseRobotAtLocation(locationToGo);
+	                    if (robotInDirection == null || !robotInDirection.type.isBuilding) {
+	                    	return directions[i];
+	                    }
+                    } catch (GameActionException e) {
+	                    e.printStackTrace();
+                    }
+        		}
+        	}
+        	return Direction.NONE;
+        }
+        
+        public RobotInfo getUnitAtEdgeOfSupplyRangeOf(RobotType unitType, MapLocation startLocation, Direction directionForChain) {
+        	MapLocation locationInChain =  startLocation.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
+        	if (rc.canSenseLocation(locationInChain)) {
+        		try {
+        			return rc.senseRobotAtLocation(locationInChain);
+        		} catch (GameActionException e) {
+        			e.printStackTrace();
+        		}
+        	}
+        	return null;
         }
     	
         public MapLocation getSecondBaseLocation() {
@@ -822,11 +871,18 @@ public class RobotPlayer {
     		MapLocation towers[] = rc.senseTowerLocations();
     		int maxDistance = Integer.MIN_VALUE;
     		int maxDistanceIndex = -1;
+    		Direction dirToEnemy = myHQ.directionTo(theirHQ);
+    		Direction dir1left = dir1.rotateLeft();
+    		Direction dir1right = dir1.rotateRight();
+    		Direction dir2left = dir2.rotateLeft();
+    		Direction dir2right =  dir2.rotateRight();
     		for (int i = 0; i<towers.length; i++) {
     			Direction dirToTower = myHQ.directionTo(towers[i]);
     			if (dirToTower == dir1 || dirToTower == dir2
-    					|| dirToTower == dir1.rotateLeft() || dirToTower == dir1.rotateRight()
-    					|| dirToTower == dir2.rotateLeft() || dirToTower == dir2.rotateRight()) {
+    					|| (dir1left != dirToEnemy && dirToTower == dir1left) 
+    					|| (dir1right != dirToEnemy && dirToTower == dir1right)
+    					|| (dir2left != dirToEnemy && dirToTower == dir2left)
+    					|| (dir2right != dirToEnemy && dirToTower == dir2right)) {
     				int distanceToTower = myHQ.distanceSquaredTo(towers[i]);
     				if (distanceToTower > maxDistance) {
     					maxDistance = distanceToTower;
@@ -839,33 +895,6 @@ public class RobotPlayer {
     		}
     		return null;
     	}
-    	
-        public Direction getSupplyConvoyDirection(MapLocation startLocation) {
-        	Direction directionForChain = myHQ.directionTo(theirHQ);
-        	if (rc.senseTerrainTile(startLocation.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY)) == TerrainTile.NORMAL) {
-        		return directionForChain;
-        	}
-        	Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-        	for (int i = 0; i < directions.length; i++) {
-        		if (directions[i] != directionForChain && directions[i] != Direction.OMNI && directions[i] != Direction.NONE 
-        				&& rc.senseTerrainTile(startLocation.add(directions[i], smuConstants.RADIUS_FOR_SUPPLY_CONVOY)) == TerrainTile.NORMAL) {
-        			return directions[i];
-        		}
-        	}
-        	return Direction.NONE;
-        }
-        
-        public RobotInfo getUnitAtEdgeOfSupplyRangeOf(RobotType unitType, MapLocation startLocation, Direction directionForChain) {
-        	MapLocation locationInChain =  startLocation.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
-        	if (rc.canSenseLocation(locationInChain)) {
-        		try {
-    				 return rc.senseRobotAtLocation(locationInChain);
-                } catch (GameActionException e) {
-	                e.printStackTrace();
-                }
-        	}
-        	return null;
-        }
 
         public void beginningOfTurn() {
             if (rc.senseEnemyHQLocation() != null) {
@@ -1110,7 +1139,7 @@ public class RobotPlayer {
         		return true;
         	}
 
-    		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack &&
+            if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack &&
     		        Clock.getRoundNum() > smuConstants.roundToDefendTowers &&
     		        myType != RobotType.BEAVER && myType != RobotType.MINER) {
     			// B1, Protect Holes Between Towers
