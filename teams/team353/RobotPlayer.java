@@ -43,6 +43,9 @@ public class RobotPlayer {
 		public static int NOT_CURRENTLY_BEING_CONTAINED = 2;
 		
 		// Strategies
+		/*
+		 * NOTE: If changing these values, alter smuTeamMemoryIndices accordingly
+		 */
 		public static int STRATEGY_DRONE_CONTAIN = 1;
 		public static int STRATEGY_TANKS_AND_SOLDIERS = 2;
 		public static int STRATEGY_DRONE_SWARM = 3;
@@ -51,7 +54,6 @@ public class RobotPlayer {
 		public static int STRATEGY_TANK_SWARM =6;
 	}
 	
-
 	public static class smuIndices {
 		public static int RALLY_POINT_X = 0;
 		public static int RALLY_POINT_Y = 1;
@@ -94,6 +96,23 @@ public class RobotPlayer {
 		    freqNumTECHNOLOGYINSTITUTE, freqNumTOWER, freqNumTRAININGFIELD};
 		
 		public static int TOWER_HOLES_BEGIN = 2000;
+	}
+	
+	public static class smuTeamMemoryIndices {
+		public static int PREV_MAP_TOWER_THREAT = 0;
+		public static int PREV_MAP_VOID_TYPE_PERCENT = 1;
+		public static int NUM_ROUNDS_USING_STRATEGY_BASE = 1;
+		// Strategies from smuConstants take values 2-7
+		public static int ROUND_OUR_HQ_ATTACKED = 8; 
+		
+		// Round their HQ attacked?
+		
+		public static int ROUND_OUR_TOWER_DESTROYED_BASE = 10;
+		// Base will expand to values 10-16
+		public static int ROUND_THEIR_TOWER_DESTROYED_BASE = 17;
+		// Base will expand to values 17-23
+//		public static int ROUND_STARTED_USING_STRATEGY_BASE = 23;
+//		// Base will expand to values 23-29
 	}
 	
 	public static void run(RobotController rc) throws GameActionException {
@@ -1416,13 +1435,21 @@ public class RobotPlayer {
         public int towerThreat;
 
         public static double ratio;
-        public boolean isFinished = false;
+        public boolean isFinishedAnalyzing = false;
         public boolean analyzedTowers = false;
         
         public int strategy;
-    	
+        public int defaultStrategy = smuConstants.STRATEGY_TANKS_AND_SOLDIERS;
+        public int numTowers;
+        public int numEnemyTowers;
+        public boolean dronesFailed = false;
+        public boolean analyzedPrevMatch = false;
+        
     	public HQ(RobotController rc) {
             super(rc);
+            
+            numTowers = rc.senseTowerLocations().length;
+            numEnemyTowers = rc.senseEnemyTowerLocations().length;
             
             xMin = Math.min(this.myHQ.x, this.theirHQ.x);
             xMax = Math.max(this.myHQ.x, this.theirHQ.x);
@@ -1435,7 +1462,7 @@ public class RobotPlayer {
             totalNormal = totalVoid = totalProcessed = 0;
             towerThreat = 0;
             strategy = 0;
-            isFinished = false;
+            isFinishedAnalyzing = false;
             
             try {
 	            computeStrategy();
@@ -1444,6 +1471,74 @@ public class RobotPlayer {
             }
             computeHoles();
         }
+    	
+    	public void analyzePreviousMatch() {
+    		long[] prevGameTeamMemory = rc.getTeamMemory();
+    		boolean hasData = false;
+    		for (long memory : prevGameTeamMemory) {
+    			if (memory != 0) {
+    				hasData = true;
+    				break;
+    			}
+    		}
+    		if (hasData) {
+    			double prevRatio = ((double) prevGameTeamMemory[smuTeamMemoryIndices.PREV_MAP_VOID_TYPE_PERCENT])/100.0;
+    			
+    			int mostUsed = 0;
+    			int mostUsedIndex = -1;
+    			int secondMostUsed = 0;
+    			int secondMostUsedIndex = -1;
+    			
+    			for(int i = 0; i < 6; i++) { // 6 is number of different strategies
+    				int numRoundsUsed = (int) prevGameTeamMemory[smuTeamMemoryIndices.NUM_ROUNDS_USING_STRATEGY_BASE + i];
+    				if (numRoundsUsed > mostUsed) {
+    					secondMostUsed = mostUsed;
+    					secondMostUsedIndex = mostUsedIndex;
+    					mostUsed = numRoundsUsed;
+    					mostUsedIndex = i;
+    				} else if (numRoundsUsed > secondMostUsed) {
+    					secondMostUsed = numRoundsUsed;
+    					secondMostUsedIndex = i;
+    				}
+    			}
+    			
+    			if (mostUsed == smuConstants.STRATEGY_DRONE_CONTAIN || mostUsed == smuConstants.STRATEGY_DRONE_SWARM) {
+    				dronesFailed = true;
+    				System.out.println(Clock.getRoundNum() + " Drones failed.");
+    			} else {
+    				if (ratio > 0.85 && prevRatio > 0.85) { 
+    					// Both Traversables
+    					int i = 0;
+    					while (prevGameTeamMemory[smuTeamMemoryIndices.ROUND_OUR_TOWER_DESTROYED_BASE + i] != 0) {
+    						i++;
+    					}
+    					int ourTowersDestroyed = i;
+    					int j = 0;
+    					while (prevGameTeamMemory[smuTeamMemoryIndices.ROUND_THEIR_TOWER_DESTROYED_BASE + j] != 0) {
+    						j++;
+    					}
+    					int theirTowersDestroyed = j;
+    					if (ourTowersDestroyed < theirTowersDestroyed) {
+    						System.out.println(Clock.getRoundNum() + " We won! Use same strategy.");
+    						defaultStrategy = mostUsedIndex + 1;
+    					} else {
+    						if (secondMostUsedIndex != -1) {
+    							System.out.println(Clock.getRoundNum() + " We lost.  Use second most used strategy.");
+    							defaultStrategy = secondMostUsedIndex + 1;
+    						}
+    					}
+    				}
+    				
+    			}
+    			
+    			for (int i = 0; i < GameConstants.TEAM_MEMORY_LENGTH; i++) {
+    				rc.setTeamMemory(i,	0);
+    			}
+    		} else {
+    			System.out.println(Clock.getRoundNum() + " Nothing to analyze.");
+    		}
+    		analyzedPrevMatch = true;
+    	}
     	
     	public void analyzeMap() {
             while (ypos < yMax + 1) {
@@ -1468,7 +1563,7 @@ public class RobotPlayer {
                 }
             }
             ratio = (double) totalNormal / totalProcessed;
-            isFinished = true;
+            isFinishedAnalyzing = true;
         }
     	
         public void analyzeTowers() {
@@ -1528,7 +1623,7 @@ public class RobotPlayer {
         			} else if (swarmingType == RobotType.TANK) {
         				strategy = smuConstants.STRATEGY_TANK_SWARM;
         			} else {
-        				strategy = smuConstants.STRATEGY_TANKS_AND_SOLDIERS;
+        				strategy = defaultStrategy;
         			}
         		}
             } else {
@@ -1625,6 +1720,45 @@ public class RobotPlayer {
             }
         }
         
+        public void saveTeamMemory() {
+        	long[] teamMemory = rc.getTeamMemory();;
+        	int currRound = Clock.getRoundNum();
+        	if (analyzedTowers && teamMemory[smuTeamMemoryIndices.PREV_MAP_TOWER_THREAT] == 0) {
+        		rc.setTeamMemory(smuTeamMemoryIndices.PREV_MAP_TOWER_THREAT, towerThreat);;
+        	}
+        	if (isFinishedAnalyzing && teamMemory[smuTeamMemoryIndices.PREV_MAP_VOID_TYPE_PERCENT] == 0) {
+        		rc.setTeamMemory(smuTeamMemoryIndices.PREV_MAP_VOID_TYPE_PERCENT, (long) (ratio * 100));
+        	}
+        	rc.setTeamMemory(smuTeamMemoryIndices.NUM_ROUNDS_USING_STRATEGY_BASE + strategy, teamMemory[smuTeamMemoryIndices.NUM_ROUNDS_USING_STRATEGY_BASE + strategy] + 1);
+        	if (teamMemory[smuTeamMemoryIndices.ROUND_OUR_HQ_ATTACKED] == 0) {
+        		if (rc.getHealth() < RobotType.HQ.maxHealth) {
+        			rc.setTeamMemory(smuTeamMemoryIndices.ROUND_OUR_HQ_ATTACKED, currRound);
+        		}
+        	}
+        	int currNumTowers = rc.senseTowerLocations().length;
+        	if (currNumTowers < numTowers) {
+        		int towersIndex =  0;
+        		while (teamMemory[smuTeamMemoryIndices.ROUND_OUR_TOWER_DESTROYED_BASE + towersIndex] != 0) {
+        			towersIndex++;
+        		}
+        		for (int i = 0; i < numTowers - currNumTowers; i++) {
+        			rc.setTeamMemory(smuTeamMemoryIndices.ROUND_OUR_TOWER_DESTROYED_BASE + towersIndex + i, currRound);
+        		}
+        		numTowers = currNumTowers;
+        	}
+        	int currNumEnemyTowers = rc.senseEnemyTowerLocations().length;
+        	if (currNumEnemyTowers < numEnemyTowers) {
+        		int towersIndex = 0;
+        		while (teamMemory[smuTeamMemoryIndices.ROUND_THEIR_TOWER_DESTROYED_BASE + towersIndex] != 0) {
+        			towersIndex++;
+        		}
+        		for (int i = 0; i < numEnemyTowers - currNumEnemyTowers; i++) {
+        			rc.setTeamMemory(smuTeamMemoryIndices.ROUND_THEIR_TOWER_DESTROYED_BASE + towersIndex + i, currRound);
+        		}
+        		numEnemyTowers = currNumEnemyTowers;
+        	}
+        }
+        
         public RobotType checkContainment() throws GameActionException {
         	RobotInfo[] enemyRobotsContaining = rc.senseNearbyRobots(50, theirTeam);
         	if (enemyRobotsContaining.length > 4) {
@@ -1697,15 +1831,17 @@ public class RobotPlayer {
             attackLeastHealthEnemyInRange();
             transferSupplies();
             
-            if (!isFinished) {
+            if (!isFinishedAnalyzing) {
             	analyzeMap();
             	if (!analyzedTowers) {
             		analyzeTowers();
             	}
             } else {
+            	if (!analyzedPrevMatch) analyzePreviousMatch();
             	chooseStrategy();
             }
             
+            if (analyzedPrevMatch) saveTeamMemory();
             rc.yield();
         }
     }
