@@ -195,18 +195,44 @@ public class RobotPlayer {
 
         public Direction[] getDirectionsToward(MapLocation dest) {
             Direction toDest = rc.getLocation().directionTo(dest);
-            Direction[] dirs = {toDest,
-                    toDest.rotateLeft(), toDest.rotateRight(),
-                toDest.rotateLeft().rotateLeft(), toDest.rotateRight().rotateRight()};
+            Direction[] dirs = new Direction[5];
+            dirs[0] = toDest;
+            if (rand.nextDouble() < 0.5){
+                dirs[1] = toDest.rotateLeft();
+                dirs[2] = toDest.rotateRight();
+            } else {
+                dirs[2] = toDest.rotateLeft();
+                dirs[1] = toDest.rotateRight();
+            }
+            if (rand.nextDouble() < 0.5){
+                dirs[3] = toDest.rotateLeft().rotateLeft();
+                dirs[4] = toDest.rotateRight().rotateRight();
+            } else {
+                dirs[4] = toDest.rotateLeft().rotateLeft();
+                dirs[3] = toDest.rotateRight().rotateRight();
+            }
 
             return dirs;
         }
 
         public Direction[] getDirectionsAway(MapLocation dest) {
             Direction toDest = rc.getLocation().directionTo(dest).opposite();
-            Direction[] dirs = {toDest,
-                    toDest.rotateLeft(), toDest.rotateRight(),
-                toDest.rotateLeft().rotateLeft(), toDest.rotateRight().rotateRight()};
+            Direction[] dirs = new Direction[5];
+            dirs[0] = toDest;
+            if (rand.nextDouble() < 0.5){
+                dirs[1] = toDest.rotateLeft();
+                dirs[2] = toDest.rotateRight();
+            } else {
+                dirs[2] = toDest.rotateLeft();
+                dirs[1] = toDest.rotateRight();
+            }
+            if (rand.nextDouble() < 0.5){
+                dirs[3] = toDest.rotateLeft().rotateLeft();
+                dirs[4] = toDest.rotateRight().rotateRight();
+            } else {
+                dirs[4] = toDest.rotateLeft().rotateLeft();
+                dirs[3] = toDest.rotateRight().rotateRight();
+            }
 
             return dirs;
         }
@@ -367,14 +393,16 @@ public class RobotPlayer {
                 int rallyY = rc.readBroadcast(smuIndices.RALLY_POINT_Y);
                 MapLocation rallyPoint = new MapLocation(rallyX, rallyY);
                 
-                RobotInfo[] robots = rc.senseNearbyRobots(rallyPoint, 10, myTeam);
-                if (Clock.getRoundNum() > smuConstants.roundToLaunchAttack 
-                		|| rc.getLocation().distanceSquaredTo(rallyPoint) > 8 + Clock.getRoundNum() / 100) {
-                	Direction newDir = getMoveDir(rallyPoint);
-                	
-                	if (newDir != null) {
-                		rc.move(newDir);
-                	}
+                if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack && 
+                		rc.getLocation().distanceSquaredTo(rallyPoint) > 8 + Clock.getRoundNum() / 100) {
+
+                    moveOptimally(getDirectionsToward(rallyPoint));
+                } else {
+                  Direction newDir = getMoveDir(rallyPoint);
+                  
+                  if (newDir != null && rc.canMove(newDir)) {
+                      rc.move(newDir);
+                  }                    
                 }
             }
 
@@ -393,15 +421,17 @@ public class RobotPlayer {
             //TODO check safety
             if (optimalDirections != null) {
                 boolean lookingForDirection = true;
+                int attemptForDirection = 0;
                 while(lookingForDirection){
                     MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
-                    Direction randomDirection = optimalDirections[(int) (rand.nextDouble()*optimalDirections.length)];
-                    MapLocation tileInFront = rc.getLocation().add(randomDirection);
+                    Direction currentDirection = optimalDirections[attemptForDirection];
+                    //Direction currentDirection = optimalDirections[(int) (rand.nextDouble()*optimalDirections.length)];
+                    MapLocation tileInFront = rc.getLocation().add(currentDirection);
 
                     //check that the direction in front is not a tile that can be attacked by the enemy towers
                     boolean tileInFrontSafe = true;
                     for(MapLocation m: enemyTowers){
-                        if(m.distanceSquaredTo(tileInFront)<=RobotType.TOWER.attackRadiusSquared){
+                        if(m.distanceSquaredTo(tileInFront)<=RobotType.TOWER.attackRadiusSquared+1){
                             tileInFrontSafe = false;
                             break;
                         }
@@ -409,20 +439,28 @@ public class RobotPlayer {
 
                     //check that we are not facing off the edge of the map
                     TerrainTile terrainTileInFront = rc.senseTerrainTile(tileInFront);
-                    if(!tileInFrontSafe || terrainTileInFront == TerrainTile.OFF_MAP
-                    		|| (myType != RobotType.DRONE && terrainTileInFront!=TerrainTile.NORMAL)){
-                        randomDirection = randomDirection.rotateLeft();
+                    if(!tileInFrontSafe || 
+                            !rc.isPathable(myType, tileInFront) ||
+                            terrainTileInFront == TerrainTile.OFF_MAP ||
+                            (myType != RobotType.DRONE && terrainTileInFront!=TerrainTile.NORMAL)){
+                        //currentDirection = currentDirection.rotateLeft();
+                        attemptForDirection++;
+                        if (attemptForDirection == optimalDirections.length) {
+                            //System.out.println("No suitable direction found!");
+                            return;
+                        }
                     }else{
-                        //try to move in the randomDirection direction
-                        if(randomDirection != null && rc.isCoreReady() && rc.canMove(randomDirection)){
-                            rc.move(randomDirection);
+                        //try to move in the currentDirection direction
+                        if(currentDirection != null && rc.isCoreReady() && rc.canMove(currentDirection)){
+                            rc.move(currentDirection);
                             lookingForDirection = false;
                             return;
                         }
                     }
+
                 }
-                
-                //System.out.println("No suitable direction found!");
+
+
             }
 
         }
@@ -1302,6 +1340,7 @@ public class RobotPlayer {
     		return rc.senseNearbyRobots(myRange, theirTeam);
     	}
     	
+    	//TODO Use optimally instead?
     	public void goToLocation(MapLocation location) {
     		try {
 	            if (rc.canSenseLocation(location) && rc.senseRobotAtLocation(location) != null 
@@ -1666,6 +1705,13 @@ public class RobotPlayer {
             		strategy = smuConstants.STRATEGY_LAUNCHERS;
             	}
             }
+//            public static int STRATEGY_DRONE_CONTAIN = 1;
+//            public static int STRATEGY_TANKS_AND_SOLDIERS = 2;
+//            public static int STRATEGY_DRONE_SWARM = 3;
+//            public static int STRATEGY_TANKS_AND_LAUNCHERS = 4;
+//            public static int STRATEGY_LAUNCHERS = 5;
+//            public static int STRATEGY_TANK_SWARM =6;
+            strategy = 2;
             rc.broadcast(smuIndices.STRATEGY, strategy);
             hasChosenStrategyPrior = true;
         }
@@ -1748,16 +1794,16 @@ public class RobotPlayer {
                 strategyAEROSPACELAB = new int[] {0, 1000, 1400};
                 strategyBARRACKS = new int[] {0, 500, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
-                strategyBEAVER = new int[] {10, 0, 0};
+                strategyBEAVER = new int[] {10, 0, 100};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
-                strategyDRONE = new int[] {120, 100, 1800};
+                strategyDRONE = new int[] {50, 100, 1800};
                 strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {4, 1, 1000};
+                strategyHELIPAD = new int[] {4, 1, 800};
                 strategyHQ = new int[] {0, 0, 0};
                 strategyLAUNCHER = new int[] {0, 1100, 1700};
-                strategyMINER = new int[] {30, 1, 500};
-                strategyMINERFACTORY = new int[] {2, 1, 250};
+                strategyMINER = new int[] {20, 100, 500};
+                strategyMINERFACTORY = new int[] {2, 100, 2000};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {0, 200, 1200};
                 strategySUPPLYDEPOT = new int[] {10, 700, 1500};
@@ -1768,8 +1814,8 @@ public class RobotPlayer {
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             } else if(strategy == smuConstants.STRATEGY_DRONE_SWARM) {
             	System.out.println("COMPUTE STRATEGY: Drone Swarm");
-                strategyAEROSPACELAB = new int[] {2, 1000, 1400};
-                strategyBARRACKS = new int[] {0, 500, 1500};
+                strategyAEROSPACELAB = new int[] {0, 1000, 1400};
+                strategyBARRACKS = new int[] {2, 500, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
@@ -1778,7 +1824,7 @@ public class RobotPlayer {
                 strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
                 strategyHELIPAD = new int[] {4, 1, 1000};
                 strategyHQ = new int[] {0, 0, 0};
-                strategyLAUNCHER = new int[] {5, 1100, 1700};
+                strategyLAUNCHER = new int[] {0, 1100, 1700};
                 strategyMINER = new int[] {30, 1, 500};
                 strategyMINERFACTORY = new int[] {2, 1, 250};
                 strategyMISSILE = new int[] {0, 0, 0};
@@ -1791,38 +1837,38 @@ public class RobotPlayer {
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             } else if(strategy == smuConstants.STRATEGY_TANK_SWARM) {
             	System.out.println("COMPUTE STRATEGY: Tank Swarm");
-                strategyAEROSPACELAB = new int[] {2, 1000, 1400};
-                strategyBARRACKS = new int[] {4, 100, 1500};
+                strategyAEROSPACELAB = new int[] {0, 1000, 1400};
+                strategyBARRACKS = new int[] {2, 100, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
-                strategyDRONE = new int[] {120, 100, 1800};
+                strategyDRONE = new int[] {0, 100, 1800};
                 strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {4, 1, 1000};
+                strategyHELIPAD = new int[] {0, 1, 1000};
                 strategyHQ = new int[] {0, 0, 0};
                 strategyLAUNCHER = new int[] {0, 1100, 1700};
                 strategyMINER = new int[] {30, 1, 500};
                 strategyMINERFACTORY = new int[] {2, 1, 250};
                 strategyMISSILE = new int[] {0, 0, 0};
-                strategySOLDIER = new int[] {0, 200, 1200};
+                strategySOLDIER = new int[] {60, 200, 1200};
                 strategySUPPLYDEPOT = new int[] {10, 700, 1500};
-                strategyTANK = new int[] {100, 800, 1800};
-                strategyTANKFACTORY = new int[] {5, 500, 1400};
+                strategyTANK = new int[] {100, 300, 1800};
+                strategyTANKFACTORY = new int[] {5, 200, 1400};
                 strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             } else if(strategy == smuConstants.STRATEGY_TANKS_AND_LAUNCHERS) {
             	System.out.println("COMPUTE STRATEGY: Tanks and Launchers");
                 strategyAEROSPACELAB = new int[] {2, 1000, 1400};
-                strategyBARRACKS = new int[] {4, 100, 1500};
+                strategyBARRACKS = new int[] {0, 100, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
-                strategyDRONE = new int[] {120, 100, 1800};
+                strategyDRONE = new int[] {0, 100, 1800};
                 strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {2, 500, 1000};
+                strategyHELIPAD = new int[] {1, 500, 1000};
                 strategyHQ = new int[] {0, 0, 0};
                 strategyLAUNCHER = new int[] {30, 1100, 1700};
                 strategyMINER = new int[] {30, 1, 500};
