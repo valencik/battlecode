@@ -301,6 +301,38 @@ public class RobotPlayer {
             return enemies;
         }
 
+        public Direction getDirOfLauncherTarget() {
+            int startingByteCode = Clock.getBytecodeNum();
+            MapLocation myLocation = rc.getLocation();
+            Direction[] targetDirections = getDirectionsToward(theirHQ);
+            MapLocation[] targets = new MapLocation[5];
+            
+            for (int i=0; i<targetDirections.length; i++){
+                targets[i] = myLocation.add(targetDirections[i], 3);
+            }
+            
+            for (int j = 0; j < targets.length; j++) {
+                if (Clock.getBytecodesLeft() > 500) {
+                    int teammates = 0;
+
+                    MapLocation targetCenter = targets[j];
+                    RobotInfo[] allRobotsInTargetArea = rc.senseNearbyRobots(
+                            targetCenter, 15, null);
+
+                    for (RobotInfo robot : allRobotsInTargetArea) {
+                        if (robot.team == myTeam)
+                            teammates++;
+                    }
+                    if (allRobotsInTargetArea.length >= 2 * teammates) {
+                        //System.out.println("getPositionOfLauncherTarget [bytecode]:" + (Clock.getBytecodeNum()-startingByteCode));
+                        return myLocation.directionTo(targetCenter);
+                    }
+                }
+            }
+            System.out.println("FAILED getPositionOfLauncherTarget [bytecode]:" + (Clock.getBytecodeNum()-startingByteCode));
+            return null;
+        }
+        
         public void attackLeastHealthEnemy(RobotInfo[] enemies) throws GameActionException {
             if (enemies.length == 0) {
                 return;
@@ -1638,8 +1670,8 @@ public class RobotPlayer {
         }
 
         public void computeStrategy() throws GameActionException{
-            boolean launcherStrategy = false;
-            boolean soldierBasherTankStrategy = true;
+            boolean launcherStrategy = true;
+            boolean soldierBasherTankStrategy = false;
             
             // [desiredNumOf, roundToBuild, roundToFinish]
             int[] strategyAEROSPACELAB = new int[3];
@@ -2097,10 +2129,10 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
             if (Clock.getRoundNum() > smuConstants.roundToLaunchAttack && rc.getMissileCount() > 0) {
-                Direction targetDir = getMoveDir(theirHQ);
+                Direction targetDir = getDirOfLauncherTarget();
                 if (targetDir != null && rc.isWeaponReady()){
                     if (rc.canLaunch(targetDir)){
-                        rc.launchMissile(getMoveDir(theirHQ));
+                        rc.launchMissile(targetDir);
                     }
                 }
             }
@@ -2111,15 +2143,28 @@ public class RobotPlayer {
     
     //MISSILE
     public static class Missile extends BaseBot {
+        public Direction dirToTarget = null;
         public Missile(RobotController rc) {
             super(rc);
+            
         }
 
         public void execute() throws GameActionException {
-            moveToRallyPoint();
-            if (getTeammatesInAttackRange().length <= 1 && getTeammatesInAttackRange().length > 4){
-                rc.explode();
+            if (dirToTarget == null) {
+                RobotInfo[] nearbyRobots = rc.senseNearbyRobots(2, myTeam);
+                for (RobotInfo robot : nearbyRobots) {
+                    if (robot.type == RobotType.LAUNCHER) {
+                        dirToTarget = rc.getLocation().directionTo(robot.location).opposite();
+                    }
+                }
+                //System.out.println("dirToTarget: "+dirToTarget.name());
             }
+            if (rc.isCoreReady() && rc.canMove(dirToTarget)){
+                rc.move(dirToTarget);
+            }
+//            if (getTeammatesInAttackRange().length <= 1 && getTeammatesInAttackRange().length > 4){
+//                rc.explode();
+//            }
             rc.yield();
         }
     }
