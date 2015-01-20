@@ -1438,8 +1438,10 @@ public class RobotPlayer {
         public boolean isFinishedAnalyzing = false;
         public boolean analyzedTowers = false;
         
-        public int strategy;
         public int defaultStrategy = smuConstants.STRATEGY_TANKS_AND_SOLDIERS;
+        public boolean hasChosenStrategyPrior = false;
+        public int strategy = defaultStrategy;
+        public int prevStrategy = 0;
         public int numTowers;
         public int numEnemyTowers;
         public boolean dronesFailed = false;
@@ -1461,7 +1463,6 @@ public class RobotPlayer {
             
             totalNormal = totalVoid = totalProcessed = 0;
             towerThreat = 0;
-            strategy = 0;
             isFinishedAnalyzing = false;
             
             try {
@@ -1519,11 +1520,9 @@ public class RobotPlayer {
     					}
     					int theirTowersDestroyed = j;
     					if (ourTowersDestroyed < theirTowersDestroyed) {
-    						System.out.println(Clock.getRoundNum() + " We won! Use same strategy.");
     						defaultStrategy = mostUsedIndex + 1;
     					} else {
     						if (secondMostUsedIndex != -1) {
-    							System.out.println(Clock.getRoundNum() + " We lost.  Use second most used strategy.");
     							defaultStrategy = secondMostUsedIndex + 1;
     						}
     					}
@@ -1534,8 +1533,6 @@ public class RobotPlayer {
     			for (int i = 0; i < GameConstants.TEAM_MEMORY_LENGTH; i++) {
     				rc.setTeamMemory(i,	0);
     			}
-    		} else {
-    			System.out.println(Clock.getRoundNum() + " Nothing to analyze.");
     		}
     		analyzedPrevMatch = true;
     	}
@@ -1585,6 +1582,9 @@ public class RobotPlayer {
         }
 
         public void chooseStrategy() throws GameActionException {
+        	if (hasChosenStrategyPrior && Clock.getRoundNum() % 250 != 0) {
+        		return;
+        	}
             if (rc.readBroadcast(smuIndices.HQ_BEING_CONTAINED) == smuConstants.NOT_CURRENTLY_BEING_CONTAINED) {
             	// Test for Swarms
         		MapLocation[] ourTowers = rc.senseTowerLocations();
@@ -1635,12 +1635,13 @@ public class RobotPlayer {
             	}
             }
             rc.broadcast(smuIndices.STRATEGY, strategy);
+            hasChosenStrategyPrior = true;
         }
 
         public void computeStrategy() throws GameActionException{
-            boolean launcherStrategy = false;
-            boolean soldierBasherTankStrategy = true;
-            
+        	if (prevStrategy == strategy) {
+        		return;
+        	}
             // [desiredNumOf, roundToBuild, roundToFinish]
             int[] strategyAEROSPACELAB = new int[3];
             int[] strategyBARRACKS = new int[3];
@@ -1664,7 +1665,8 @@ public class RobotPlayer {
             int[] strategyTOWER = new int[3];
             int[] strategyTRAININGFIELD = new int[3];
 
-            if(soldierBasherTankStrategy){
+            if (strategy == smuConstants.STRATEGY_TANKS_AND_SOLDIERS) {
+            	System.out.println("COMPUTE STRATEGY: Tanks and Soldiers");
                 strategyAEROSPACELAB = new int[] {0, 0, 0};
                 strategyBARRACKS = new int[] {4, 500, 1500};
                 strategyBASHER = new int[] {50, 1200, 1700};
@@ -1686,8 +1688,8 @@ public class RobotPlayer {
                 strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
-            }
-            if(launcherStrategy){
+            } else if(strategy == smuConstants.STRATEGY_LAUNCHERS){
+            	System.out.println("COMPUTE STRATEGY: Launchers");
                 strategyAEROSPACELAB = new int[] {2, 1000, 1400};
                 strategyBARRACKS = new int[] {4, 500, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
@@ -1709,8 +1711,99 @@ public class RobotPlayer {
                 strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
+            } else if(strategy == smuConstants.STRATEGY_DRONE_CONTAIN) {
+            	System.out.println("COMPUTE STRATEGY: Drone Contain");
+                strategyAEROSPACELAB = new int[] {0, 1000, 1400};
+                strategyBARRACKS = new int[] {0, 500, 1500};
+                strategyBASHER = new int[] {0, 1200, 1700};
+                strategyBEAVER = new int[] {10, 0, 0};
+                strategyCOMMANDER = new int[] {0, 0, 0};
+                strategyCOMPUTER = new int[] {0, 0, 0};
+                strategyDRONE = new int[] {120, 100, 1800};
+                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
+                strategyHELIPAD = new int[] {4, 1, 1000};
+                strategyHQ = new int[] {0, 0, 0};
+                strategyLAUNCHER = new int[] {0, 1100, 1700};
+                strategyMINER = new int[] {30, 1, 500};
+                strategyMINERFACTORY = new int[] {2, 1, 250};
+                strategyMISSILE = new int[] {0, 0, 0};
+                strategySOLDIER = new int[] {0, 200, 1200};
+                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategyTANK = new int[] {0, 1100, 1800};
+                strategyTANKFACTORY = new int[] {0, 1000, 1400};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
+                strategyTOWER = new int[] {0, 0, 0};
+                strategyTRAININGFIELD = new int[] {0, 0, 0};
+            } else if(strategy == smuConstants.STRATEGY_DRONE_SWARM) {
+            	System.out.println("COMPUTE STRATEGY: Drone Swarm");
+                strategyAEROSPACELAB = new int[] {2, 1000, 1400};
+                strategyBARRACKS = new int[] {0, 500, 1500};
+                strategyBASHER = new int[] {0, 1200, 1700};
+                strategyBEAVER = new int[] {10, 0, 0};
+                strategyCOMMANDER = new int[] {0, 0, 0};
+                strategyCOMPUTER = new int[] {0, 0, 0};
+                strategyDRONE = new int[] {120, 100, 1800};
+                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
+                strategyHELIPAD = new int[] {4, 1, 1000};
+                strategyHQ = new int[] {0, 0, 0};
+                strategyLAUNCHER = new int[] {5, 1100, 1700};
+                strategyMINER = new int[] {30, 1, 500};
+                strategyMINERFACTORY = new int[] {2, 1, 250};
+                strategyMISSILE = new int[] {0, 0, 0};
+                strategySOLDIER = new int[] {25, 200, 1200};
+                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategyTANK = new int[] {0, 1100, 1800};
+                strategyTANKFACTORY = new int[] {0, 1000, 1400};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
+                strategyTOWER = new int[] {0, 0, 0};
+                strategyTRAININGFIELD = new int[] {0, 0, 0};
+            } else if(strategy == smuConstants.STRATEGY_TANK_SWARM) {
+            	System.out.println("COMPUTE STRATEGY: Tank Swarm");
+                strategyAEROSPACELAB = new int[] {2, 1000, 1400};
+                strategyBARRACKS = new int[] {4, 100, 1500};
+                strategyBASHER = new int[] {0, 1200, 1700};
+                strategyBEAVER = new int[] {10, 0, 0};
+                strategyCOMMANDER = new int[] {0, 0, 0};
+                strategyCOMPUTER = new int[] {0, 0, 0};
+                strategyDRONE = new int[] {120, 100, 1800};
+                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
+                strategyHELIPAD = new int[] {4, 1, 1000};
+                strategyHQ = new int[] {0, 0, 0};
+                strategyLAUNCHER = new int[] {0, 1100, 1700};
+                strategyMINER = new int[] {30, 1, 500};
+                strategyMINERFACTORY = new int[] {2, 1, 250};
+                strategyMISSILE = new int[] {0, 0, 0};
+                strategySOLDIER = new int[] {0, 200, 1200};
+                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategyTANK = new int[] {100, 800, 1800};
+                strategyTANKFACTORY = new int[] {5, 500, 1400};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
+                strategyTOWER = new int[] {0, 0, 0};
+                strategyTRAININGFIELD = new int[] {0, 0, 0};
+            } else if(strategy == smuConstants.STRATEGY_TANKS_AND_LAUNCHERS) {
+            	System.out.println("COMPUTE STRATEGY: Tanks and Launchers");
+                strategyAEROSPACELAB = new int[] {2, 1000, 1400};
+                strategyBARRACKS = new int[] {4, 100, 1500};
+                strategyBASHER = new int[] {0, 1200, 1700};
+                strategyBEAVER = new int[] {10, 0, 0};
+                strategyCOMMANDER = new int[] {0, 0, 0};
+                strategyCOMPUTER = new int[] {0, 0, 0};
+                strategyDRONE = new int[] {120, 100, 1800};
+                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
+                strategyHELIPAD = new int[] {2, 500, 1000};
+                strategyHQ = new int[] {0, 0, 0};
+                strategyLAUNCHER = new int[] {30, 1100, 1700};
+                strategyMINER = new int[] {30, 1, 500};
+                strategyMINERFACTORY = new int[] {2, 1, 250};
+                strategyMISSILE = new int[] {0, 0, 0};
+                strategySOLDIER = new int[] {0, 200, 1200};
+                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategyTANK = new int[] {100, 800, 1800};
+                strategyTANKFACTORY = new int[] {5, 500, 1400};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
+                strategyTOWER = new int[] {0, 0, 0};
+                strategyTRAININGFIELD = new int[] {0, 0, 0};
             }
-            
             int[][] strategyArray = new int[][] {strategyAEROSPACELAB, strategyBARRACKS, strategyBASHER, strategyBEAVER, strategyCOMMANDER, strategyCOMPUTER, strategyDRONE, strategyHANDWASHSTATION, strategyHELIPAD, strategyHQ, strategyLAUNCHER, strategyMINER, strategyMINERFACTORY, strategyMISSILE, strategySOLDIER, strategySUPPLYDEPOT, strategyTANK, strategyTANKFACTORY, strategyTECHNOLOGYINSTITUTE, strategyTOWER, strategyTRAININGFIELD};
 
             for (int i = 1; i < strategyArray.length; i++) {
@@ -1718,6 +1811,7 @@ public class RobotPlayer {
                 rc.broadcast(smuIndices.freqRoundToBuild + i, strategyArray[i-1][1]);
                 rc.broadcast(smuIndices.freqRoundToFinish + i, strategyArray[i-1][2]);
             }
+            prevStrategy = strategy;
         }
         
         public void saveTeamMemory() {
@@ -1839,6 +1933,11 @@ public class RobotPlayer {
             } else {
             	if (!analyzedPrevMatch) analyzePreviousMatch();
             	chooseStrategy();
+            	try {
+            		computeStrategy();
+            	} catch (GameActionException e) {
+            		e.printStackTrace();
+            	}
             }
             
             if (analyzedPrevMatch) saveTeamMemory();
@@ -2004,10 +2103,10 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
         	if (!defendSelf()) {
-        		if (Clock.getRoundNum() > 1800) {
-        			moveToRallyPoint();
-        		} else {
+        		if (rc.readBroadcast(smuIndices.STRATEGY) == smuConstants.STRATEGY_DRONE_CONTAIN && Clock.getRoundNum() < 1800) {
         			contain();
+        		} else {
+        			moveToRallyPoint();
         		}
         	}
             transferSupplies();
