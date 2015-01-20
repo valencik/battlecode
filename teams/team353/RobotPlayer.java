@@ -1439,6 +1439,7 @@ public class RobotPlayer {
         public boolean analyzedTowers = false;
         
         public int defaultStrategy = smuConstants.STRATEGY_TANKS_AND_SOLDIERS;
+        public boolean hasChosenStrategyPrior = false;
         public int strategy = defaultStrategy;
         public int prevStrategy = 0;
         public int numTowers;
@@ -1519,11 +1520,9 @@ public class RobotPlayer {
     					}
     					int theirTowersDestroyed = j;
     					if (ourTowersDestroyed < theirTowersDestroyed) {
-    						System.out.println(Clock.getRoundNum() + " We won! Use same strategy.");
     						defaultStrategy = mostUsedIndex + 1;
     					} else {
     						if (secondMostUsedIndex != -1) {
-    							System.out.println(Clock.getRoundNum() + " We lost.  Use second most used strategy.");
     							defaultStrategy = secondMostUsedIndex + 1;
     						}
     					}
@@ -1534,8 +1533,6 @@ public class RobotPlayer {
     			for (int i = 0; i < GameConstants.TEAM_MEMORY_LENGTH; i++) {
     				rc.setTeamMemory(i,	0);
     			}
-    		} else {
-    			System.out.println(Clock.getRoundNum() + " Nothing to analyze.");
     		}
     		analyzedPrevMatch = true;
     	}
@@ -1585,6 +1582,9 @@ public class RobotPlayer {
         }
 
         public void chooseStrategy() throws GameActionException {
+        	if (hasChosenStrategyPrior && Clock.getRoundNum() % 250 != 0) {
+        		return;
+        	}
             if (rc.readBroadcast(smuIndices.HQ_BEING_CONTAINED) == smuConstants.NOT_CURRENTLY_BEING_CONTAINED) {
             	// Test for Swarms
         		MapLocation[] ourTowers = rc.senseTowerLocations();
@@ -1635,6 +1635,7 @@ public class RobotPlayer {
             	}
             }
             rc.broadcast(smuIndices.STRATEGY, strategy);
+            hasChosenStrategyPrior = true;
         }
 
         public void computeStrategy() throws GameActionException{
