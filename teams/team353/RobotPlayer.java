@@ -292,7 +292,7 @@ public class RobotPlayer {
                 if (rc.canSpawn(d, type)) {
                     return d;
                 } else {
-                    //System.out.println("Could not find valid spawn location!");
+//                    //System.out.println("Could not find valid spawn location!");
                 }
             }
             return null;
@@ -311,7 +311,7 @@ public class RobotPlayer {
                 if (rc.canBuild(d, type)) {
                     return d;
                 } else {
-                    //System.out.println("Could not find valid build location!");
+//                    //System.out.println("Could not find valid build location!");
                 }
             }
             return null;
@@ -350,12 +350,12 @@ public class RobotPlayer {
                             teammates++;
                     }
                     if (allRobotsInTargetArea.length >= 2 * teammates) {
-                        //System.out.println("getPositionOfLauncherTarget [bytecode]:" + (Clock.getBytecodeNum()-startingByteCode));
+//                        //System.out.println("getPositionOfLauncherTarget [bytecode]:" + (Clock.getBytecodeNum()-startingByteCode));
                         return myLocation.directionTo(targetCenter);
                     }
                 }
             }
-            System.out.println("FAILED getPositionOfLauncherTarget [bytecode]:" + (Clock.getBytecodeNum()-startingByteCode));
+//            System.out.println("FAILED getPositionOfLauncherTarget [bytecode]:" + (Clock.getBytecodeNum()-startingByteCode));
             return null;
         }
         
@@ -446,7 +446,7 @@ public class RobotPlayer {
                         //currentDirection = currentDirection.rotateLeft();
                         attemptForDirection++;
                         if (attemptForDirection == optimalDirections.length) {
-                            //System.out.println("No suitable direction found!");
+//                            //System.out.println("No suitable direction found!");
                             return;
                         }
                     }else{
@@ -591,7 +591,7 @@ public class RobotPlayer {
                     }
                     break;
                 default:
-                    System.out.println("ERROR: No building type match found in spawnOptimally()!");
+//                    System.out.println("ERROR: No building type match found in spawnOptimally()!");
                     return false;
                 }
             }//isCoreReady
@@ -629,7 +629,7 @@ public class RobotPlayer {
                 
                 //If there is something in the queue and we can not replace it, then return
                 if (queue != 0 && !buildingsOutrankUnits){
-                    System.out.println("Queue full, can't outrank");
+//                    System.out.println("Queue full, can't outrank");
                     return;
                 }
 
@@ -644,7 +644,7 @@ public class RobotPlayer {
                 if (Arrays.asList(buildingInts).contains(queue)) {
                     //Build it if we can afford it
                     if (ore > IntToRobotType(queue).oreCost) {
-                        System.out.println("Satisfying queue.");
+//                        System.out.println("Satisfying queue.");
                         buildUnit(IntToRobotType(queue));
                     }
                     //Return either way, we can't replace buildings in the queue
@@ -676,15 +676,15 @@ public class RobotPlayer {
                         //We don't have as many buildings as we want...
                         if (ore > IntToRobotType(buildTypeInt).oreCost){
                             buildUnit(IntToRobotType(buildTypeInt));
-                            //System.out.println("Tried to build "+ IntToRobotType(buildTypeInt));
+//                            //System.out.println("Tried to build "+ IntToRobotType(buildTypeInt));
                         } else {
                             double weightToBeat = getWeightOfRobotType(IntToRobotType(buildTypeInt));
                             double rolled = rand.nextDouble();
-                            //System.out.println("Rolled "+ rolled + "for a " + buildTypeInt + " against " + weightToBeat);
+//                            //System.out.println("Rolled "+ rolled + "for a " + buildTypeInt + " against " + weightToBeat);
                             if (rolled < weightToBeat){
                                 rc.broadcast(smuIndices.freqQueue, buildTypeInt);
-                                System.out.println("Scheduled a " + IntToRobotType(buildTypeInt).name() +
-                                        ". Need " + IntToRobotType(buildTypeInt).oreCost + " ore.");
+//                                System.out.println("Scheduled a " + IntToRobotType(buildTypeInt).name() +
+                                        //". Need " + IntToRobotType(buildTypeInt).oreCost + " ore.");
                             }
                             return;
                         }
@@ -776,7 +776,7 @@ public class RobotPlayer {
                 rc.broadcast(smuIndices.freqNumTRAININGFIELD, rc.readBroadcast(smuIndices.freqNumTRAININGFIELD)+1);
                 break;
             default:
-                //System.out.println("ERRROR!");
+//                //System.out.println("ERRROR!");
                 return;
             }
         }
@@ -1311,17 +1311,17 @@ public class RobotPlayer {
             double weight;
             
             //Return zero if unit is not desired. (Divide by zero protection)
-            //System.out.println("type: "+IntToRobotType(typeInt));
+//            //System.out.println("type: "+IntToRobotType(typeInt));
             if (rc.readBroadcast(smuIndices.freqDesiredNumOf + typeInt) == 0) {
-                //System.out.println("Error: No desired "+IntToRobotType(typeInt));
+//                //System.out.println("Error: No desired "+IntToRobotType(typeInt));
                 return 0;
             }
             if (rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt) >= rc.readBroadcast(smuIndices.freqRoundToFinish + typeInt)) {
-                //System.out.println("Error: build > finish for: "+IntToRobotType(typeInt));
+//                //System.out.println("Error: build > finish for: "+IntToRobotType(typeInt));
                 return 0;
             }
             if (round < rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt)) {
-                //System.out.println("Error: Too early for "+IntToRobotType(typeInt));
+//                //System.out.println("Error: Too early for "+IntToRobotType(typeInt));
                 return 0;
             }
 
@@ -1329,7 +1329,7 @@ public class RobotPlayer {
             double x = (double)(round - rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt)) / (double) (rc.readBroadcast(smuIndices.freqRoundToFinish + typeInt) - rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt));
             double y = (double)rc.readBroadcast(smuIndices.freqNum[typeInt]) / (double) rc.readBroadcast(smuIndices.freqDesiredNumOf + typeInt);
             weight = smuConstants.weightScaleMagic * Math.pow(x, (smuConstants.weightExponentMagic + y));
-            //System.out.println("type: "+IntToRobotType(typeInt)+" x: " + x + " y: " + y + " weight: " + weight);
+//            //System.out.println("type: "+IntToRobotType(typeInt)+" x: " + x + " y: " + y + " weight: " + weight);
             return weight;
         }
         
@@ -1450,30 +1450,30 @@ public class RobotPlayer {
     				overlapped[i]++;
     				coveredBottom = true;
     			}
-    			//System.out.println("Tower " + i + " overlapped " + overlapped[i] + " " + towerLocations[i]);
+//    			//System.out.println("Tower " + i + " overlapped " + overlapped[i] + " " + towerLocations[i]);
     			if (overlapped[i] < 2) {
     				try {
     					int towerAttackRadius = (int) Math.sqrt(RobotType.TOWER.attackRadiusSquared) + 1;
     					if (!coveredLeft) {
-    						//System.out.println("Tower " + towerLocations[i] + " Not covered left");
+//    						//System.out.println("Tower " + towerLocations[i] + " Not covered left");
     						rc.broadcast(holesBroadcastIndex, towerLocations[i].x - towerAttackRadius);
     						rc.broadcast(holesBroadcastIndex + 1, towerLocations[i].y);
     						holesBroadcastIndex+=2;
     					}
     					if (!coveredRight) {
-    						//System.out.println("Tower " + towerLocations[i] + " Not covered right");
+//    						//System.out.println("Tower " + towerLocations[i] + " Not covered right");
     						rc.broadcast(holesBroadcastIndex, towerLocations[i].x + towerAttackRadius);
     						rc.broadcast(holesBroadcastIndex + 1, towerLocations[i].y);
     						holesBroadcastIndex+=2;
     					}
     					if (!coveredTop) {
-    						//System.out.println("Tower " + towerLocations[i] + " Not covered top");
+//    						//System.out.println("Tower " + towerLocations[i] + " Not covered top");
     						rc.broadcast(holesBroadcastIndex, towerLocations[i].x);
     						rc.broadcast(holesBroadcastIndex + 1, towerLocations[i].y - towerAttackRadius);
     						holesBroadcastIndex+=2;
     					}
     					if (!coveredBottom) {
-    						//System.out.println("Tower " + towerLocations[i] + " Not covered bottom");
+//    						//System.out.println("Tower " + towerLocations[i] + " Not covered bottom");
     						rc.broadcast(holesBroadcastIndex, towerLocations[i].x);
     						rc.broadcast(holesBroadcastIndex + 1, towerLocations[i].y + towerAttackRadius);
     						holesBroadcastIndex+=2;
@@ -1490,7 +1490,7 @@ public class RobotPlayer {
     			e.printStackTrace();
     		}
     		
-    		//System.out.println("BYTEEND on " + Clock.getRoundNum() + ": " + Clock.getBytecodeNum());
+//    		//System.out.println("BYTEEND on " + Clock.getRoundNum() + ": " + Clock.getBytecodeNum());
     		return null;
     	}
     	
@@ -1576,7 +1576,7 @@ public class RobotPlayer {
     			
     			if (mostUsed == smuConstants.STRATEGY_DRONE_CONTAIN || mostUsed == smuConstants.STRATEGY_DRONE_SWARM) {
     				dronesFailed = true;
-    				System.out.println(Clock.getRoundNum() + " Drones failed.");
+//    				System.out.println(Clock.getRoundNum() + " Drones failed.");
     			} else {
     				if (ratio > 0.85 && prevRatio > 0.85) { 
     					// Both Traversables
@@ -1744,7 +1744,7 @@ public class RobotPlayer {
             int[] strategyTRAININGFIELD = new int[3];
 
             if (strategy == smuConstants.STRATEGY_TANKS_AND_SOLDIERS) {
-            	System.out.println("COMPUTE STRATEGY: Tanks and Soldiers");
+//            	System.out.println("COMPUTE STRATEGY: Tanks and Soldiers");
                 strategyAEROSPACELAB = new int[] {0, 0, 0};
                 strategyBARRACKS = new int[] {4, 500, 1500};
                 strategyBASHER = new int[] {50, 1200, 1700};
@@ -1767,7 +1767,7 @@ public class RobotPlayer {
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             } else if(strategy == smuConstants.STRATEGY_LAUNCHERS){
-            	System.out.println("COMPUTE STRATEGY: Launchers");
+//            	System.out.println("COMPUTE STRATEGY: Launchers");
                 strategyAEROSPACELAB = new int[] {2, 1000, 1400};
                 strategyBARRACKS = new int[] {4, 500, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
@@ -1790,7 +1790,7 @@ public class RobotPlayer {
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             } else if(strategy == smuConstants.STRATEGY_DRONE_CONTAIN) {
-            	System.out.println("COMPUTE STRATEGY: Drone Contain");
+//            	System.out.println("COMPUTE STRATEGY: Drone Contain");
                 strategyAEROSPACELAB = new int[] {0, 1000, 1400};
                 strategyBARRACKS = new int[] {0, 500, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
@@ -1813,7 +1813,7 @@ public class RobotPlayer {
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             } else if(strategy == smuConstants.STRATEGY_DRONE_SWARM) {
-            	System.out.println("COMPUTE STRATEGY: Drone Swarm");
+//            	System.out.println("COMPUTE STRATEGY: Drone Swarm");
                 strategyAEROSPACELAB = new int[] {0, 1000, 1400};
                 strategyBARRACKS = new int[] {2, 500, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
@@ -1836,7 +1836,7 @@ public class RobotPlayer {
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             } else if(strategy == smuConstants.STRATEGY_TANK_SWARM) {
-            	System.out.println("COMPUTE STRATEGY: Tank Swarm");
+//            	System.out.println("COMPUTE STRATEGY: Tank Swarm");
                 strategyAEROSPACELAB = new int[] {0, 1000, 1400};
                 strategyBARRACKS = new int[] {2, 100, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
@@ -1859,7 +1859,7 @@ public class RobotPlayer {
                 strategyTOWER = new int[] {0, 0, 0};
                 strategyTRAININGFIELD = new int[] {0, 0, 0};
             } else if(strategy == smuConstants.STRATEGY_TANKS_AND_LAUNCHERS) {
-            	System.out.println("COMPUTE STRATEGY: Tanks and Launchers");
+//            	System.out.println("COMPUTE STRATEGY: Tanks and Launchers");
                 strategyAEROSPACELAB = new int[] {2, 1000, 1400};
                 strategyBARRACKS = new int[] {0, 100, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
@@ -2302,7 +2302,7 @@ public class RobotPlayer {
                         dirToTarget = rc.getLocation().directionTo(robot.location).opposite();
                     }
                 }
-                //System.out.println("dirToTarget: "+dirToTarget.name());
+//                //System.out.println("dirToTarget: "+dirToTarget.name());
             }
             if (rc.isCoreReady() && rc.canMove(dirToTarget)){
                 rc.move(dirToTarget);
