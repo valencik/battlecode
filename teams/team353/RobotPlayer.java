@@ -414,7 +414,7 @@ public class RobotPlayer {
                         randomDirection = randomDirection.rotateLeft();
                     }else{
                         //try to move in the randomDirection direction
-                        if(rc.isCoreReady()&&rc.canMove(randomDirection)){
+                        if(randomDirection != null && rc.isCoreReady() && rc.canMove(randomDirection)){
                             rc.move(randomDirection);
                             lookingForDirection = false;
                             return;
@@ -761,7 +761,7 @@ public class RobotPlayer {
         		}
         	}
         	if(suppliesToThisLocation!=null){
-        		if (roundStart == Clock.getRoundNum() && transferAmount > 0) {
+        	    if (roundStart == Clock.getRoundNum() && transferAmount > 0 && Clock.getBytecodesLeft() > 550) {
     				try {
     					rc.transferSupplies((int)transferAmount, suppliesToThisLocation);
     				} catch(GameActionException gax) {
@@ -805,7 +805,7 @@ public class RobotPlayer {
         public Direction getSupplyConvoyDirection(MapLocation startLocation) {
         	Direction directionForChain = myHQ.directionTo(theirHQ);
         	MapLocation locationToGo = startLocation.add(directionForChain, smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
-        	if (rc.senseTerrainTile(locationToGo) == TerrainTile.NORMAL) {
+        	if (rc.senseTerrainTile(locationToGo) == TerrainTile.NORMAL && rc.canSenseLocation(locationToGo)) {
                 RobotInfo robotInDirection;
                 try {
 	                robotInDirection = rc.senseRobotAtLocation(locationToGo);
@@ -1312,7 +1312,7 @@ public class RobotPlayer {
 	            e1.printStackTrace();
             }
 			Direction direction = getMoveDir(location);
-			if (direction != null && rc.isCoreReady()) {
+			if (direction != null && rc.isCoreReady() && rc.canMove(direction) && Clock.getBytecodesLeft() > 55) {
 				try {
 					rc.move(direction);
 				} catch (GameActionException e) {
