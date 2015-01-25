@@ -902,7 +902,7 @@ public class RobotPlayer {
         			for (RobotInfo teammate : nearbyTeammates) {
         				if (!teammate.type.isBuilding && teammate.type != RobotType.MINER && teammate.type != RobotType.BEAVER) numAttackers++;
         			}
-        			if (numAttackers >= getNumAttackersToContain() || rc.senseNearbyRobots(25, theirTeam).length == 0) {
+        			if (numAttackers >= getNumAttackersToContain()) {
         				moveOptimally();
         			}
                 } catch (GameActionException e) {
