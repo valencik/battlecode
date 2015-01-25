@@ -25,7 +25,7 @@ public class RobotPlayer {
 		// Defence
 		public static int NUM_TOWER_PROTECTORS = 4;
 		public static int NUM_HOLE_PROTECTORS = 3;
-		public static int PROTECT_OTHERS_RANGE = 10;
+		public static int PROTECT_OTHERS_RANGE = 15;
 		public static int DISTANCE_TO_START_PROTECTING_SQUARED = 200;
 		
 		// Idle States
@@ -65,37 +65,35 @@ public class RobotPlayer {
 		public static int HQ_BEING_CONTAINED = 20;
 		public static int HQ_BEING_CONTAINED_BY = 21;
 		
-		public static final int freqRoundToBuild = 100;
-		public static final int freqRoundToFinish = 200;
-		public static final int freqDesiredNumOf = 400;
+		//Strategy broadcasts use frequencies 1000 through 3200!
+		//TODO		
+        public static final int channelAEROSPACELAB = 1100;
+        public static final int channelBARRACKS = 1200;
+        public static final int channelBASHER = 1300;
+        public static final int channelBEAVER = 1400;
+        public static final int channelCOMMANDER = 1500;
+        public static final int channelCOMPUTER = 1600;
+        public static final int channelDRONE = 1700;
+        public static final int channelHANDWASHSTATION = 1800;
+        public static final int channelHELIPAD = 1900;
+        public static final int channelHQ = 2000;
+        public static final int channelLAUNCHER = 2100;
+        public static final int channelMINER = 2200;
+        public static final int channelMINERFACTORY = 2300;
+        public static final int channelMISSILE = 2400;
+        public static final int channelSOLDIER = 2500;
+        public static final int channelSUPPLYDEPOT = 2600;
+        public static final int channelTANK = 2700;
+        public static final int channelTANKFACTORY = 2800;
+        public static final int channelTECHNOLOGYINSTITUTE = 2900;
+        public static final int channelTOWER = 3000;
+        public static final int channelTRAININGFIELD = 3100;
+		public static final int[] channel = new int[] {0, channelAEROSPACELAB, channelBARRACKS, channelBASHER, channelBEAVER, channelCOMMANDER, 
+		    channelCOMPUTER, channelDRONE, channelHANDWASHSTATION, channelHELIPAD, channelHQ, channelLAUNCHER, channelMINER, 
+		    channelMINERFACTORY, channelMISSILE, channelSOLDIER, channelSUPPLYDEPOT, channelTANK, channelTANKFACTORY, 
+		    channelTECHNOLOGYINSTITUTE, channelTOWER, channelTRAININGFIELD};
 		
-		public static final int freqNumAEROSPACELAB = 301;
-		public static final int freqNumBARRACKS = 302;
-		public static final int freqNumBASHER = 303;
-		public static final int freqNumBEAVER = 304;
-		public static final int freqNumCOMMANDER = 305;
-		public static final int freqNumCOMPUTER = 306;
-		public static final int freqNumDRONE = 307;
-		public static final int freqNumHANDWASHSTATION = 308;
-		public static final int freqNumHELIPAD = 309;
-		public static final int freqNumHQ = 310;
-		public static final int freqNumLAUNCHER = 311;
-		public static final int freqNumMINER = 312;
-		public static final int freqNumMINERFACTORY = 313;
-		public static final int freqNumMISSILE = 314;
-		public static final int freqNumSOLDIER = 315;
-		public static final int freqNumSUPPLYDEPOT = 316;
-		public static final int freqNumTANK = 317;
-		public static final int freqNumTANKFACTORY = 318;
-		public static final int freqNumTECHNOLOGYINSTITUTE = 319;
-		public static final int freqNumTOWER = 320;
-		public static final int freqNumTRAININGFIELD = 321;
-		public static final int[] freqNum = new int[] {0, freqNumAEROSPACELAB, freqNumBARRACKS, freqNumBASHER, freqNumBEAVER, freqNumCOMMANDER, 
-		    freqNumCOMPUTER, freqNumDRONE, freqNumHANDWASHSTATION, freqNumHELIPAD, freqNumHQ, freqNumLAUNCHER, freqNumMINER, 
-		    freqNumMINERFACTORY, freqNumMISSILE, freqNumSOLDIER, freqNumSUPPLYDEPOT, freqNumTANK, freqNumTANKFACTORY, 
-		    freqNumTECHNOLOGYINSTITUTE, freqNumTOWER, freqNumTRAININGFIELD};
-		
-		public static int TOWER_HOLES_BEGIN = 2000;
+		public static int TOWER_HOLES_BEGIN = 4000;
 	}
 	
 	public static class smuTeamMemoryIndices {
@@ -386,7 +384,7 @@ public class RobotPlayer {
                 }
             }
         }
-
+        
         public void moveToRallyPoint() throws GameActionException {
             if (rc.isCoreReady()) {
                 int rallyX = rc.readBroadcast(smuIndices.RALLY_POINT_X);
@@ -483,6 +481,7 @@ public class RobotPlayer {
 
             switch(currentRobotType){
             case BASHER:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case BEAVER:
                 if (getDistanceSquared(this.myHQ) < 50){
@@ -498,6 +497,7 @@ public class RobotPlayer {
             	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case LAUNCHER:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case MINER:
                 if (getDistanceSquared(this.myHQ) < 50){
@@ -508,11 +508,12 @@ public class RobotPlayer {
             case MISSILE:
                 break;
             case SOLDIER:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case TANK:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             default:
-                //error
             } //Done RobotType specific actions.
             return optimalDirections;
 
@@ -525,8 +526,12 @@ public class RobotPlayer {
             int spawnTypeInt = RobotTypeToInt(spawnType);
             int spawnQueue = rc.readBroadcast(smuIndices.freqQueue);
             
+            int currentAmount = rc.readBroadcast(smuIndices.channel[spawnTypeInt]+0);
+            int desiredAmount = rc.readBroadcast(smuIndices.channel[spawnTypeInt]+1);
+            int roundToBeginSpawning = rc.readBroadcast(smuIndices.channel[spawnTypeInt]+2);
+            
             //Check if we actually need anymore spawnType units
-            if (round > rc.readBroadcast(smuIndices.freqRoundToBuild + spawnTypeInt) && rc.readBroadcast(smuIndices.freqNum[spawnTypeInt]) < rc.readBroadcast(smuIndices.freqDesiredNumOf + spawnTypeInt)){
+            if (round > roundToBeginSpawning && currentAmount < desiredAmount){
                 if(ore > myType.oreCost){
                     if (spawnUnit(spawnType)) return true;
                 } else {
@@ -621,78 +626,53 @@ public class RobotPlayer {
         
         //Spawns unit based on calling type. Performs all checks.
         public void buildOptimally() throws GameActionException {
-            if (rc.isCoreReady()){
-                int round = Clock.getRoundNum();
-                double ore = rc.getTeamOre();
-                boolean buildingsOutrankUnits = true;
-                int queue = rc.readBroadcast(smuIndices.freqQueue);
-                
-                //If there is something in the queue and we can not replace it, then return
-                if (queue != 0 && !buildingsOutrankUnits){
-//                    System.out.println("Queue full, can't outrank");
-                    return;
-                }
 
-                //--- Nothing in queue or we are allowed to replace spawnUnits ---
-                
-                Integer[] buildingInts = new Integer[] {RobotTypeToInt(RobotType.AEROSPACELAB),
-                        RobotTypeToInt(RobotType.BARRACKS), RobotTypeToInt(RobotType.HANDWASHSTATION), RobotTypeToInt(RobotType.HELIPAD),
-                        RobotTypeToInt(RobotType.MINERFACTORY), RobotTypeToInt(RobotType.SUPPLYDEPOT), RobotTypeToInt(RobotType.TANKFACTORY),
-                        RobotTypeToInt(RobotType.TECHNOLOGYINSTITUTE), RobotTypeToInt(RobotType.TRAININGFIELD)};
-                
-                //Check if there is a building in queue
-                if (Arrays.asList(buildingInts).contains(queue)) {
-                    //Build it if we can afford it
-                    if (ore > IntToRobotType(queue).oreCost) {
-//                        System.out.println("Satisfying queue.");
-                        buildUnit(IntToRobotType(queue));
-                    }
-                    //Return either way, we can't replace buildings in the queue
-                    return;
-                }
+            int round = Clock.getRoundNum();
+            double ore = rc.getTeamOre();
+            boolean buildingsOutrankUnits = true;
+            int queue = rc.readBroadcast(smuIndices.freqQueue);
+            RobotType[] arrayOfStructures = new RobotType[] {RobotType.AEROSPACELAB,
+                    RobotType.BARRACKS, RobotType.HANDWASHSTATION, RobotType.HELIPAD, RobotType.HQ,
+                    RobotType.MINERFACTORY, RobotType.SUPPLYDEPOT, RobotType.TANKFACTORY,
+                    RobotType.TECHNOLOGYINSTITUTE, RobotType.TOWER, RobotType.TRAININGFIELD};
 
-                //we should sort the array based on need
-                Arrays.sort(buildingInts, new Comparator<Integer>() {
-                    public int compare(Integer type1, Integer type2) {
-                        double wType1 = 0;
-                        double wType2 = 0;
-                        try {
-                            wType1 = getWeightOfRobotType(IntToRobotType(type1));
-                            wType2 = getWeightOfRobotType(IntToRobotType(type2));
-                        } catch (GameActionException e) {
-                            e.printStackTrace();
-                        }
-                        return Double.compare(wType1, wType2);
-                    }
-                });
-                
-                //for i in array of structures
-                for (int buildTypeInt : buildingInts) {
-                    int currentBuildNum = rc.readBroadcast(smuIndices.freqNum[buildTypeInt]);
-                    if (round > rc.readBroadcast(smuIndices.freqRoundToBuild + buildTypeInt) && 
-                            rc.readBroadcast(smuIndices.freqDesiredNumOf + buildTypeInt) > 0 &&
-                            rc.readBroadcast(smuIndices.freqRoundToBuild + buildTypeInt) < rc.readBroadcast(smuIndices.freqRoundToFinish + buildTypeInt)  &&
-                            currentBuildNum < rc.readBroadcast(smuIndices.freqDesiredNumOf + buildTypeInt)){
-                        //We don't have as many buildings as we want...
-                        if (ore > IntToRobotType(buildTypeInt).oreCost){
-                            buildUnit(IntToRobotType(buildTypeInt));
-//                            //System.out.println("Tried to build "+ IntToRobotType(buildTypeInt));
-                        } else {
-                            double weightToBeat = getWeightOfRobotType(IntToRobotType(buildTypeInt));
-                            double rolled = rand.nextDouble();
-//                            //System.out.println("Rolled "+ rolled + "for a " + buildTypeInt + " against " + weightToBeat);
-                            if (rolled < weightToBeat){
-                                rc.broadcast(smuIndices.freqQueue, buildTypeInt);
-//                                System.out.println("Scheduled a " + IntToRobotType(buildTypeInt).name() +
-                                        //". Need " + IntToRobotType(buildTypeInt).oreCost + " ore.");
-                            }
-                            return;
-                        }
-                    }
-                }
-                
+            //If there is something in the queue and we can not replace it, then return
+            if (queue != 0 && !buildingsOutrankUnits){
+                System.out.println("Queue full, can't outrank");
+                return;
             }
+
+            //Check if there is a building in queue
+            if (Arrays.asList(arrayOfStructures).contains(IntToRobotType(queue))) {
+                //Build it if we can afford it
+                if (ore > IntToRobotType(queue).oreCost) {
+                    System.out.println("INFO: Satisfying queue. ("+IntToRobotType(queue).name()+")");
+                    buildUnit(IntToRobotType(queue));
+                }
+                //Return either way, we can't replace buildings in the queue
+                return;
+            }
+
+            //Loop over structures and build or queue any needed ones
+            for (RobotType structure : arrayOfStructures) {
+                int intStructure = RobotTypeToInt(structure);
+                double weightOfStructure = getWeightOfRobotType(IntToRobotType(intStructure));
+
+                if (weightOfStructure == 1.0){
+                    if (ore > IntToRobotType(intStructure).oreCost){
+                        buildUnit(IntToRobotType(intStructure));
+                        System.out.println("Tried to build "+ IntToRobotType(intStructure));
+                    } else {
+                        rc.broadcast(smuIndices.freqQueue, intStructure);
+                        System.out.println("Scheduled a " + IntToRobotType(intStructure).name() +
+                                ". Need " + (IntToRobotType(intStructure).oreCost-ore) + " more ore.");
+                    }
+                    return;
+                }                        
+            }//end loop of structures
+
         }
+
         
         //Gets direction, checks delays, and builds unit
         public boolean buildUnit(RobotType buildType) {
@@ -715,70 +695,11 @@ public class RobotPlayer {
             return false;
         }
 
-        //TODO find a way to deal with deaths.
+        //Increment the currentAmount of a RobotType
         public void incrementCount(RobotType type) throws GameActionException {
-            switch(type){
-            case AEROSPACELAB:
-                rc.broadcast(smuIndices.freqNumAEROSPACELAB, rc.readBroadcast(smuIndices.freqNumAEROSPACELAB)+1);
-                break;
-            case BARRACKS:
-                rc.broadcast(smuIndices.freqNumBARRACKS, rc.readBroadcast(smuIndices.freqNumBARRACKS)+1);
-                break;
-            case BASHER:
-                rc.broadcast(smuIndices.freqNumBASHER, rc.readBroadcast(smuIndices.freqNumBASHER)+1);
-                break;
-            case BEAVER:
-                rc.broadcast(smuIndices.freqNumBEAVER, rc.readBroadcast(smuIndices.freqNumBEAVER)+1);
-                break;
-            case COMMANDER:
-                rc.broadcast(smuIndices.freqNumCOMMANDER, rc.readBroadcast(smuIndices.freqNumCOMMANDER)+1);
-                break;
-            case COMPUTER:
-                rc.broadcast(smuIndices.freqNumCOMPUTER, rc.readBroadcast(smuIndices.freqNumCOMPUTER)+1);
-                break;
-            case DRONE:
-                rc.broadcast(smuIndices.freqNumDRONE, rc.readBroadcast(smuIndices.freqNumDRONE)+1);
-                break;
-            case HANDWASHSTATION:
-                rc.broadcast(smuIndices.freqNumHANDWASHSTATION, rc.readBroadcast(smuIndices.freqNumHANDWASHSTATION)+1);
-                break;
-            case HELIPAD:
-                rc.broadcast(smuIndices.freqNumHELIPAD, rc.readBroadcast(smuIndices.freqNumHELIPAD)+1);
-                break;
-            case LAUNCHER:
-                rc.broadcast(smuIndices.freqNumLAUNCHER, rc.readBroadcast(smuIndices.freqNumLAUNCHER)+1);
-                break;
-            case MINER:
-                rc.broadcast(smuIndices.freqNumMINER, rc.readBroadcast(smuIndices.freqNumMINER)+1);
-                break;
-            case MINERFACTORY:
-                rc.broadcast(smuIndices.freqNumMINERFACTORY, rc.readBroadcast(smuIndices.freqNumMINERFACTORY)+1);
-                break;
-            case MISSILE:
-                rc.broadcast(smuIndices.freqNumMISSILE, rc.readBroadcast(smuIndices.freqNumMISSILE)+1);
-                break;
-            case SOLDIER:
-                rc.broadcast(smuIndices.freqNumSOLDIER, rc.readBroadcast(smuIndices.freqNumSOLDIER)+1);
-                break;
-            case SUPPLYDEPOT:
-                rc.broadcast(smuIndices.freqNumSUPPLYDEPOT, rc.readBroadcast(smuIndices.freqNumSUPPLYDEPOT)+1);
-                break;
-            case TANK:
-                rc.broadcast(smuIndices.freqNumTANK, rc.readBroadcast(smuIndices.freqNumTANK)+1);
-                break;
-            case TANKFACTORY:
-                rc.broadcast(smuIndices.freqNumTANKFACTORY, rc.readBroadcast(smuIndices.freqNumTANKFACTORY)+1);
-                break;
-            case TECHNOLOGYINSTITUTE:
-                rc.broadcast(smuIndices.freqNumTECHNOLOGYINSTITUTE, rc.readBroadcast(smuIndices.freqNumTECHNOLOGYINSTITUTE)+1);
-                break;
-            case TRAININGFIELD:
-                rc.broadcast(smuIndices.freqNumTRAININGFIELD, rc.readBroadcast(smuIndices.freqNumTRAININGFIELD)+1);
-                break;
-            default:
-//                //System.out.println("ERRROR!");
-                return;
-            }
+            int intType = RobotTypeToInt(type);
+            int currentAmount = rc.readBroadcast(smuIndices.channel[intType]+0);
+            rc.broadcast(smuIndices.channel[intType+0], currentAmount+1);
         }
 
         public void transferSupplies() throws GameActionException {
@@ -812,6 +733,13 @@ public class RobotPlayer {
         // true, I'm in the convoy or going to be
         // false, no place in the convoy for me
         public boolean formSupplyConvoy() {
+        	try {
+	            if (rc.readBroadcast(smuIndices.STRATEGY) == smuConstants.STRATEGY_DRONE_CONTAIN) {
+	            	return false;
+	            }
+            } catch (GameActionException e1) {
+	            e1.printStackTrace();
+            }
     		Direction directionForChain = getSupplyConvoyDirection(myHQ);
         	RobotInfo minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, myHQ, directionForChain);
 
@@ -969,7 +897,14 @@ public class RobotPlayer {
         	if (myLocation.distanceSquaredTo(enemyHQ) > radiusFromHQ + 3) {
         		// move towards the HQ
         		try {
-	                moveOptimally();
+        			RobotInfo[] nearbyTeammates = rc.senseNearbyRobots(4, myTeam);
+        			int numAttackers = 0;
+        			for (RobotInfo teammate : nearbyTeammates) {
+        				if (!teammate.type.isBuilding && teammate.type != RobotType.MINER && teammate.type != RobotType.BEAVER) numAttackers++;
+        			}
+        			if (numAttackers >= getNumAttackersToContain()) {
+        				moveOptimally();
+        			}
                 } catch (GameActionException e) {
 	                e.printStackTrace();
                 }
@@ -982,7 +917,7 @@ public class RobotPlayer {
         			directionToGo = getCounterClockwiseDirection(myLocation, enemyHQ);
         		}
         		locationToGo = myLocation.add(directionToGo);
-        		if (rc.isPathable(RobotType.DRONE, locationToGo)) {
+        		if (rc.isPathable(myType, locationToGo)) {
         			if (isLocationSafe(locationToGo)) {
         				goToLocation(locationToGo);
         			} else {
@@ -1007,8 +942,20 @@ public class RobotPlayer {
         	myContainPreviousLocation = myLocation;
         }
         
+        public int getNumAttackersToContain() {
+        	if (myType == RobotType.SOLDIER) {
+        		return 2;
+        	} else if (myType == RobotType.TANK) {
+        		return 1;
+        	} else {
+        		return 2;
+        	}
+        }
+        
         public boolean isLocationSafe(MapLocation location) {
-        	if (location.distanceSquaredTo(theirHQ) > RobotType.HQ.attackRadiusSquared) {
+        	int hqAttackRadius = RobotType.HQ.attackRadiusSquared;
+        	if (rc.senseEnemyTowerLocations().length >= 2) hqAttackRadius = 35;
+        	if (location.distanceSquaredTo(theirHQ) > hqAttackRadius) {
         		for (MapLocation tower : rc.senseEnemyTowerLocations()) {
         			if (location.distanceSquaredTo(tower) <= RobotType.TOWER.attackRadiusSquared) {
         				return false;
@@ -1075,6 +1022,7 @@ public class RobotPlayer {
         // Defend
         public boolean defendSelf() {
     		RobotInfo[] nearbyEnemies = getEnemiesInAttackRange();
+    		
     		if(nearbyEnemies != null && nearbyEnemies.length > 0) {
     			try {
     				if (rc.isWeaponReady()) {
@@ -1104,63 +1052,6 @@ public class RobotPlayer {
     		return false;
         }
         
-        public boolean defendTowerHoles() {
-        	int towerHoleX = -1;
-			try {
-				towerHoleX = rc.readBroadcast(smuIndices.TOWER_HOLES_BEGIN);
-			} catch (GameActionException e1) {
-				e1.printStackTrace();
-			}
-			boolean defendingHole = false;
-			if(towerHoleX != -1) {
-				int towerHolesIndex = smuIndices.TOWER_HOLES_BEGIN;
-				int towerHoleY;
-				do {
-					try {
-						towerHoleX = rc.readBroadcast(towerHolesIndex);
-						towerHolesIndex++;
-						towerHoleY = rc.readBroadcast(towerHolesIndex);
-						towerHolesIndex++;
-						if (towerHoleX != -1) {
-							MapLocation holeLocation = new MapLocation(towerHoleX, towerHoleY);
-							RobotInfo[] nearbyTeammates = rc.senseNearbyRobots(holeLocation, 5, myTeam);
-							if (nearbyTeammates.length < smuConstants.NUM_HOLE_PROTECTORS && rc.getLocation().distanceSquaredTo(holeLocation) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) {
-								defendingHole = true;
-								towerHoleX = -1;
-								goToLocation(holeLocation);    									
-							}
-						}
-					} catch (GameActionException e) {
-						e.printStackTrace();
-					}
-				} while(towerHoleX != -1);
-			}
-			return defendingHole;
-        }
-        
-        public boolean defendTowers() {
-        	MapLocation[] myTowers = rc.senseTowerLocations();
-			MapLocation closestTower = null;
-            try {
-                closestTower = getRallyPoint();
-            } catch (GameActionException e) {
-                e.printStackTrace();
-            }
-			int closestDist = Integer.MAX_VALUE;
-			for (MapLocation tower : myTowers) {
-				RobotInfo[] nearbyRobots = getTeammatesNearTower(tower);
-				if (nearbyRobots.length < smuConstants.NUM_TOWER_PROTECTORS && rc.getLocation().distanceSquaredTo(tower) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) { //tower underprotected
-					int dist = tower.distanceSquaredTo(theirHQ);
-					if (dist < closestDist) {
-						closestDist = dist;
-						closestTower = tower;
-					}				
-				}
-			}
-			goToLocation(closestTower);
-			return true;
-        }
-        
         public boolean defend() {
     		// A1, Protect Self
         	boolean isProtectingSelf = defendSelf();
@@ -1174,23 +1065,6 @@ public class RobotPlayer {
         		return true;
         	}
 
-            if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack &&
-    		        Clock.getRoundNum() > smuConstants.roundToDefendTowers &&
-    		        myType != RobotType.BEAVER && myType != RobotType.MINER) {
-    			// B1, Protect Holes Between Towers
-    			boolean isProtectingHoles = defendTowerHoles();
-    			if (isProtectingHoles) {
-    				return true;
-    			}
-    			
-    			if(myType != RobotType.BEAVER && myType != RobotType.MINER) {
-    				// B2, Protect Towers
-    				boolean isProtectingTowers = defendTowers();
-    				if (isProtectingTowers) {
-    					return true;
-    				}
-    			}
-    		}
     		return false;
     	}
         
@@ -1308,34 +1182,67 @@ public class RobotPlayer {
         public double getWeightOfRobotType(RobotType type) throws GameActionException {
             int typeInt = RobotTypeToInt(type);
             int round = Clock.getRoundNum();
-            double weight;
+            double weight = 0;
             
-            //Return zero if unit is not desired. (Divide by zero protection)
-//            //System.out.println("type: "+IntToRobotType(typeInt));
-            if (rc.readBroadcast(smuIndices.freqDesiredNumOf + typeInt) == 0) {
-//                //System.out.println("Error: No desired "+IntToRobotType(typeInt));
-                return 0;
-            }
-            if (rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt) >= rc.readBroadcast(smuIndices.freqRoundToFinish + typeInt)) {
-//                //System.out.println("Error: build > finish for: "+IntToRobotType(typeInt));
-                return 0;
-            }
-            if (round < rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt)) {
-//                //System.out.println("Error: Too early for "+IntToRobotType(typeInt));
-                return 0;
-            }
-
-            //The weight is equal to the surface drawn by z = x^(m*y)
-            double x = (double)(round - rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt)) / (double) (rc.readBroadcast(smuIndices.freqRoundToFinish + typeInt) - rc.readBroadcast(smuIndices.freqRoundToBuild + typeInt));
-            double y = (double)rc.readBroadcast(smuIndices.freqNum[typeInt]) / (double) rc.readBroadcast(smuIndices.freqDesiredNumOf + typeInt);
-            weight = smuConstants.weightScaleMagic * Math.pow(x, (smuConstants.weightExponentMagic + y));
-//            //System.out.println("type: "+IntToRobotType(typeInt)+" x: " + x + " y: " + y + " weight: " + weight);
+            if (!type.isBuilding) {
+                int currentAmount = rc.readBroadcast(smuIndices.channel[typeInt]+0);
+                int desiredAmount = rc.readBroadcast(smuIndices.channel[typeInt]+1);
+                int roundToBeginSpawning = rc.readBroadcast(smuIndices.channel[typeInt]+2);
+                int roundToFinishSpawning = rc.readBroadcast(smuIndices.channel[typeInt]+3);
+                
+                //Return zero if unit is not desired. (Divide by zero protection)
+                if (desiredAmount == 0) {
+                    //System.out.println("Error: No desired "+IntToRobotType(typeInt));
+                    return 0;
+                }
+                if (roundToBeginSpawning >= roundToFinishSpawning) {
+                    //System.out.println("Error: build > finish for: "+IntToRobotType(typeInt));
+                    return 0;
+                }
+                if (round < roundToBeginSpawning) {
+                    //System.out.println("Error: Too early for "+IntToRobotType(typeInt));
+                    return 0;
+                }
+                
+                //The weight is equal to a point on the surface drawn by z = x^(m*y) where
+                double x = (double) (round - roundToBeginSpawning)
+                        / (double) (roundToFinishSpawning - roundToBeginSpawning);
+                double y = (double) currentAmount / (double) desiredAmount;
+                weight = smuConstants.weightScaleMagic
+                        * Math.pow(x, (smuConstants.weightExponentMagic + y));
+                //System.out.println("type: "+IntToRobotType(typeInt)+" x: " + x + " y: " + y + " weight: " + weight);
+                return weight;
+            } //end units
+            
+            if (type.isBuilding){
+                int currentAmount = rc.readBroadcast(smuIndices.channel[typeInt]+0);
+                int desiredAmount = rc.readBroadcast(smuIndices.channel[typeInt]+1);
+                int nextRoundToBuild = rc.readBroadcast(smuIndices.channel[typeInt]+2+currentAmount);
+                int intQueuedType = rc.readBroadcast(smuIndices.freqQueue);
+                
+                if (currentAmount < desiredAmount && nextRoundToBuild != 0) {
+                    if (round > nextRoundToBuild && typeInt != intQueuedType) {
+                        //TODO We need to check if we are currently building it...
+                        System.out.println("Warning: round > nextRoundToBuild && not queued >> " + type.name());
+                        return 1.0;
+                    }
+                    if (round == nextRoundToBuild) {
+                        return 1.0;
+                    }
+                    if (round < nextRoundToBuild) {
+                        return 0.0;
+                    }
+                    System.out.println("ERROR: Unexpected return path in getWeightOfRobotType " + type.name());
+                    return weight;
+                } else {
+                    return 0;
+                }
+            } //end structures
+            
+            System.out.println("ERROR: Unexpected return path in getWeightOfRobotType");
             return weight;
         }
         
-    	/**
-    	 *  Simple helpers, more logic for these later
-    	 */
     	public RobotInfo[] getEnemiesInAttackRange() {
     		return rc.senseNearbyRobots(myRange, theirTeam);
     	}
@@ -1347,17 +1254,23 @@ public class RobotPlayer {
 	            		&& rc.getLocation().distanceSquaredTo(location)<3) { // 3 squares
 	            	return;
 	            }
+	            Direction direction = getMoveDir(location);
+	            RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(rc.getLocation().add(direction), RobotType.TOWER.attackRadiusSquared, theirTeam);
+	            boolean towersNearby = false;
+	            for (RobotInfo enemy : nearbyEnemies) {
+	            	if (enemy.type == RobotType.TOWER || enemy.type == RobotType.HQ) {
+	            		towersNearby = true;
+	            		break;
+	            	}
+	            }
+	            if (!towersNearby || Clock.getRoundNum() > smuConstants.roundToLaunchAttack) {
+	            	if (direction != null && rc.isCoreReady() && rc.canMove(direction) && Clock.getBytecodesLeft() > 55) {
+	            		rc.move(direction);
+	            	}
+	            }
             } catch (GameActionException e1) {
 	            e1.printStackTrace();
             }
-			Direction direction = getMoveDir(location);
-			if (direction != null && rc.isCoreReady() && rc.canMove(direction) && Clock.getBytecodesLeft() > 55) {
-				try {
-					rc.move(direction);
-				} catch (GameActionException e) {
-					e.printStackTrace();
-				}
-			}
     	}
     	
     	public RobotInfo[] getRobotsEngagedInAttack() {
@@ -1365,7 +1278,7 @@ public class RobotPlayer {
     		boolean hasEnemy = false;
     		boolean hasFriendly = false;
     		for (RobotInfo robot : nearbyRobots) {
-    			if(robot.team == theirTeam) {
+    			if(robot.team == theirTeam && robot.type != RobotType.TOWER) {
     				hasEnemy = true;
     				if (hasFriendly) {
     					return nearbyRobots;
@@ -1705,13 +1618,14 @@ public class RobotPlayer {
             		strategy = smuConstants.STRATEGY_LAUNCHERS;
             	}
             }
-//            public static int STRATEGY_DRONE_CONTAIN = 1;
-//            public static int STRATEGY_TANKS_AND_SOLDIERS = 2;
-//            public static int STRATEGY_DRONE_SWARM = 3;
-//            public static int STRATEGY_TANKS_AND_LAUNCHERS = 4;
-//            public static int STRATEGY_LAUNCHERS = 5;
-//            public static int STRATEGY_TANK_SWARM =6;
-            strategy = 2;
+
+            //STRATEGY_DRONE_CONTAIN = 1;
+            //STRATEGY_TANKS_AND_SOLDIERS = 2;
+            //STRATEGY_DRONE_SWARM = 3;
+            //STRATEGY_TANKS_AND_LAUNCHERS = 4;
+            //STRATEGY_LAUNCHERS = 5;
+            //STRATEGY_TANK_SWARM = 6;
+            //strategy = 1;
             rc.broadcast(smuIndices.STRATEGY, strategy);
             hasChosenStrategyPrior = true;
         }
@@ -1744,153 +1658,178 @@ public class RobotPlayer {
             int[] strategyTRAININGFIELD = new int[3];
 
             if (strategy == smuConstants.STRATEGY_TANKS_AND_SOLDIERS) {
-//            	System.out.println("COMPUTE STRATEGY: Tanks and Soldiers");
-                strategyAEROSPACELAB = new int[] {0, 0, 0};
-                strategyBARRACKS = new int[] {4, 500, 1500};
+                System.out.println("COMPUTE STRATEGY: Tanks and Soldiers");
+                strategyAEROSPACELAB = new int[] {0};
+                strategyBARRACKS = new int[] {100, 300, 650, 800};
                 strategyBASHER = new int[] {50, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {0, 0, 0};
-                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {0, 0, 0};
-                strategyHQ = new int[] {0, 0, 0};
+                strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
+                strategyHELIPAD = new int[] {0};
+                strategyHQ = new int[] {0};
                 strategyLAUNCHER = new int[] {0, 0, 0};
                 strategyMINER = new int[] {50, 1, 500};
-                strategyMINERFACTORY = new int[] {2, 1, 250};
+                strategyMINERFACTORY = new int[] {1, 200};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {120, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {10, 700, 1400};
+//                strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
+                strategySUPPLYDEPOT = new int[] {1000, 1400, 1500};
                 strategyTANK = new int[] {20, 1100, 1800};
-                strategyTANKFACTORY = new int[] {2, 1000, 1400};
-                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
-                strategyTOWER = new int[] {0, 0, 0};
-                strategyTRAININGFIELD = new int[] {0, 0, 0};
+                strategyTANKFACTORY = new int[] {1000, 1200};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0};
+                strategyTOWER = new int[] {0};
+                strategyTRAININGFIELD = new int[] {0};
             } else if(strategy == smuConstants.STRATEGY_LAUNCHERS){
-//            	System.out.println("COMPUTE STRATEGY: Launchers");
-                strategyAEROSPACELAB = new int[] {2, 1000, 1400};
+                System.out.println("COMPUTE STRATEGY: Launchers");
+                strategyAEROSPACELAB = new int[] {800, 1000};
                 strategyBARRACKS = new int[] {4, 500, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {0, 0, 0};
-                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {1, 1, 600};
-                strategyHQ = new int[] {0, 0, 0};
+                strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
+                strategyHELIPAD = new int[] {1};
+                strategyHQ = new int[] {0};
                 strategyLAUNCHER = new int[] {20, 1100, 1700};
                 strategyMINER = new int[] {30, 1, 500};
                 strategyMINERFACTORY = new int[] {2, 1, 250};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {120, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
                 strategyTANK = new int[] {0, 1100, 1800};
-                strategyTANKFACTORY = new int[] {0, 1000, 1400};
-                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
-                strategyTOWER = new int[] {0, 0, 0};
-                strategyTRAININGFIELD = new int[] {0, 0, 0};
+                strategyTANKFACTORY = new int[] {0};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0};
+                strategyTOWER = new int[] {0};
+                strategyTRAININGFIELD = new int[] {0};
             } else if(strategy == smuConstants.STRATEGY_DRONE_CONTAIN) {
-//            	System.out.println("COMPUTE STRATEGY: Drone Contain");
-                strategyAEROSPACELAB = new int[] {0, 1000, 1400};
-                strategyBARRACKS = new int[] {0, 500, 1500};
+                System.out.println("COMPUTE STRATEGY: Drone Contain");
+                strategyAEROSPACELAB = new int[] {0};
+                strategyBARRACKS = new int[] {0};
                 strategyBASHER = new int[] {0, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 100};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {50, 100, 1800};
-                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {4, 1, 800};
-                strategyHQ = new int[] {0, 0, 0};
+                strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
+                strategyHELIPAD = new int[] {1, 300};
+                strategyHQ = new int[] {0};
                 strategyLAUNCHER = new int[] {0, 1100, 1700};
                 strategyMINER = new int[] {20, 100, 500};
-                strategyMINERFACTORY = new int[] {2, 100, 2000};
+                strategyMINERFACTORY = new int[] {100, 500};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {0, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
                 strategyTANK = new int[] {0, 1100, 1800};
-                strategyTANKFACTORY = new int[] {0, 1000, 1400};
-                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
-                strategyTOWER = new int[] {0, 0, 0};
-                strategyTRAININGFIELD = new int[] {0, 0, 0};
+                strategyTANKFACTORY = new int[] {0};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0};
+                strategyTOWER = new int[] {0};
+                strategyTRAININGFIELD = new int[] {0};
             } else if(strategy == smuConstants.STRATEGY_DRONE_SWARM) {
-//            	System.out.println("COMPUTE STRATEGY: Drone Swarm");
-                strategyAEROSPACELAB = new int[] {0, 1000, 1400};
+                System.out.println("COMPUTE STRATEGY: Drone Swarm");
+                strategyAEROSPACELAB = new int[] {0};
                 strategyBARRACKS = new int[] {2, 500, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {120, 100, 1800};
-                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {4, 1, 1000};
-                strategyHQ = new int[] {0, 0, 0};
+                strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
+                strategyHELIPAD = new int[] {1, 400};
+                strategyHQ = new int[] {0};
                 strategyLAUNCHER = new int[] {0, 1100, 1700};
                 strategyMINER = new int[] {30, 1, 500};
                 strategyMINERFACTORY = new int[] {2, 1, 250};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {25, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
-                strategyTANK = new int[] {0, 1100, 1800};
-                strategyTANKFACTORY = new int[] {0, 1000, 1400};
-                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
-                strategyTOWER = new int[] {0, 0, 0};
-                strategyTRAININGFIELD = new int[] {0, 0, 0};
+                strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
+                strategyTANK = new int[] {0, 0, 0};
+                strategyTANKFACTORY = new int[] {0};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0};
+                strategyTOWER = new int[] {0};
+                strategyTRAININGFIELD = new int[] {0};
             } else if(strategy == smuConstants.STRATEGY_TANK_SWARM) {
-//            	System.out.println("COMPUTE STRATEGY: Tank Swarm");
-                strategyAEROSPACELAB = new int[] {0, 1000, 1400};
+                System.out.println("COMPUTE STRATEGY: Tank Swarm");
+                strategyAEROSPACELAB = new int[] {0};
                 strategyBARRACKS = new int[] {2, 100, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {0, 100, 1800};
-                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {0, 1, 1000};
-                strategyHQ = new int[] {0, 0, 0};
-                strategyLAUNCHER = new int[] {0, 1100, 1700};
+                strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
+                strategyHELIPAD = new int[] {00};
+                strategyHQ = new int[] {0};
+                strategyLAUNCHER = new int[] {0, 0, 0};
                 strategyMINER = new int[] {30, 1, 500};
                 strategyMINERFACTORY = new int[] {2, 1, 250};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {60, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
                 strategyTANK = new int[] {100, 300, 1800};
-                strategyTANKFACTORY = new int[] {5, 200, 1400};
-                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
-                strategyTOWER = new int[] {0, 0, 0};
-                strategyTRAININGFIELD = new int[] {0, 0, 0};
+                strategyTANKFACTORY = new int[] {200, 400, 600, 800, 1000};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0};
+                strategyTOWER = new int[] {0};
+                strategyTRAININGFIELD = new int[] {0};
             } else if(strategy == smuConstants.STRATEGY_TANKS_AND_LAUNCHERS) {
-//            	System.out.println("COMPUTE STRATEGY: Tanks and Launchers");
-                strategyAEROSPACELAB = new int[] {2, 1000, 1400};
+                System.out.println("COMPUTE STRATEGY: Tanks and Launchers");
+                strategyAEROSPACELAB = new int[] {1000, 1200};
                 strategyBARRACKS = new int[] {0, 100, 1500};
                 strategyBASHER = new int[] {0, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {0, 100, 1800};
-                strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
+                strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
                 strategyHELIPAD = new int[] {1, 500, 1000};
-                strategyHQ = new int[] {0, 0, 0};
+                strategyHQ = new int[] {0};
                 strategyLAUNCHER = new int[] {30, 1100, 1700};
                 strategyMINER = new int[] {30, 1, 500};
                 strategyMINERFACTORY = new int[] {2, 1, 250};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {0, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
                 strategyTANK = new int[] {100, 800, 1800};
                 strategyTANKFACTORY = new int[] {5, 500, 1400};
-                strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
-                strategyTOWER = new int[] {0, 0, 0};
-                strategyTRAININGFIELD = new int[] {0, 0, 0};
+                strategyTECHNOLOGYINSTITUTE = new int[] {0};
+                strategyTOWER = new int[] {0};
+                strategyTRAININGFIELD = new int[] {0};
             }
-            int[][] strategyArray = new int[][] {strategyAEROSPACELAB, strategyBARRACKS, strategyBASHER, strategyBEAVER, strategyCOMMANDER, strategyCOMPUTER, strategyDRONE, strategyHANDWASHSTATION, strategyHELIPAD, strategyHQ, strategyLAUNCHER, strategyMINER, strategyMINERFACTORY, strategyMISSILE, strategySOLDIER, strategySUPPLYDEPOT, strategyTANK, strategyTANKFACTORY, strategyTECHNOLOGYINSTITUTE, strategyTOWER, strategyTRAININGFIELD};
+            
+            //BE CAREFUL!!!
+            //TODO
+            int[][] strategyUnitArray = new int[][] {strategyBASHER, strategyBEAVER, strategyCOMMANDER, strategyCOMPUTER, strategyDRONE, strategyLAUNCHER, strategyMINER, strategyMISSILE, strategySOLDIER, strategyTANK};
+            int[] channelUnitArray = new int[] {smuIndices.channelBASHER, smuIndices.channelBEAVER, smuIndices.channelCOMMANDER, smuIndices.channelCOMPUTER, smuIndices.channelDRONE, smuIndices.channelLAUNCHER, smuIndices.channelMINER, smuIndices.channelMISSILE, smuIndices.channelSOLDIER, smuIndices.channelTANK};
+            int[][] strategyStructureArray = new int[][] {strategyAEROSPACELAB, strategyBARRACKS, strategyHANDWASHSTATION, strategyHELIPAD, strategyHQ, strategyMINERFACTORY, strategySUPPLYDEPOT, strategyTANKFACTORY, strategyTECHNOLOGYINSTITUTE, strategyTOWER, strategyTRAININGFIELD};
+            int[] channelStructureArray = new int[] {smuIndices.channelAEROSPACELAB, smuIndices.channelBARRACKS, smuIndices.channelHANDWASHSTATION, smuIndices.channelHELIPAD, smuIndices.channelHQ, smuIndices.channelMINERFACTORY, smuIndices.channelSUPPLYDEPOT, smuIndices.channelTANKFACTORY, smuIndices.channelTECHNOLOGYINSTITUTE, smuIndices.channelTOWER, smuIndices.channelTRAININGFIELD};
 
-            for (int i = 1; i < strategyArray.length; i++) {
-                rc.broadcast(smuIndices.freqDesiredNumOf + i, strategyArray[i-1][0]);
-                rc.broadcast(smuIndices.freqRoundToBuild + i, strategyArray[i-1][1]);
-                rc.broadcast(smuIndices.freqRoundToFinish + i, strategyArray[i-1][2]);
+            //Broadcast unit strategies
+            for (int i = 1; i < strategyUnitArray.length; i++) {
+                rc.broadcast(channelUnitArray[i] + 0, 0);
+                rc.broadcast(channelUnitArray[i] + 1, strategyUnitArray[i][0]);
+                rc.broadcast(channelUnitArray[i] + 2, strategyUnitArray[i][1]);
+                rc.broadcast(channelUnitArray[i] + 3, strategyUnitArray[i][2]);
             }
+            
+            //Broadcast structure strategies
+            for (int i = 1; i < strategyStructureArray.length; i++) {
+                rc.broadcast(channelStructureArray[i] + 0, 0);
+                if (strategyStructureArray[i].length > 1) {
+                    rc.broadcast(channelStructureArray[i] + 1, strategyStructureArray[i].length);
+                    for (int j = 0; j < strategyStructureArray[i].length; j++) {
+                        rc.broadcast(channelStructureArray[i] + j + 2, strategyStructureArray[i][j]);
+                    }
+                } else {
+                    rc.broadcast(channelStructureArray[i] + 1, 0);
+                    rc.broadcast(channelStructureArray[i] + 2, 0);
+                }
+            }
+
             prevStrategy = strategy;
         }
+
         
         public void saveTeamMemory() {
         	long[] teamMemory = rc.getTeamMemory();;
@@ -2129,7 +2068,11 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
           	if (!defend()) {
-        		moveToRallyPoint();
+          		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+          			contain();
+          		} else {
+          			moveToRallyPoint();
+          		}
         	}
         	transferSupplies();
             rc.yield();
@@ -2143,16 +2086,11 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-    		boolean hasTakenAction = false;
-        	if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
-    			hasTakenAction = defendTowerHoles();
-        		if (!hasTakenAction) {
-    				hasTakenAction = defendTowers();
-    			}
-    		}
-        	if (!hasTakenAction) {
-        		moveToRallyPoint();
-        	}
+      		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+      			contain();
+      		} else {
+      			moveToRallyPoint();
+      		}
             transferSupplies();
             rc.yield();
         }
@@ -2166,7 +2104,11 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
             if (!defend()) {
-                moveToRallyPoint();
+          		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+          			contain();
+          		} else {
+          			moveToRallyPoint();
+          		}
             }
             transferSupplies();
             rc.yield();
@@ -2181,7 +2123,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
         	if (!defendSelf()) {
-        		if (rc.readBroadcast(smuIndices.STRATEGY) == smuConstants.STRATEGY_DRONE_CONTAIN && Clock.getRoundNum() < 1800) {
+        		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
         			contain();
         		} else {
         			moveToRallyPoint();
@@ -2273,15 +2215,19 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            if (Clock.getRoundNum() > smuConstants.roundToLaunchAttack && rc.getMissileCount() > 0) {
+        	boolean launched = false;
+            if (rc.getMissileCount() > 0) {
                 Direction targetDir = getDirOfLauncherTarget();
                 if (targetDir != null && rc.isWeaponReady()){
                     if (rc.canLaunch(targetDir)){
                         rc.launchMissile(targetDir);
+                        launched = true;
                     }
                 }
             }
-            moveToRallyPoint();
+            if (!launched) {
+            	contain();
+            }
             rc.yield();
         }
     }
