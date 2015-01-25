@@ -25,7 +25,7 @@ public class RobotPlayer {
 		// Defence
 		public static int NUM_TOWER_PROTECTORS = 4;
 		public static int NUM_HOLE_PROTECTORS = 3;
-		public static int PROTECT_OTHERS_RANGE = 10;
+		public static int PROTECT_OTHERS_RANGE = 15;
 		public static int DISTANCE_TO_START_PROTECTING_SQUARED = 200;
 		
 		// Idle States
@@ -386,7 +386,7 @@ public class RobotPlayer {
                 }
             }
         }
-
+        
         public void moveToRallyPoint() throws GameActionException {
             if (rc.isCoreReady()) {
                 int rallyX = rc.readBroadcast(smuIndices.RALLY_POINT_X);
@@ -483,6 +483,7 @@ public class RobotPlayer {
 
             switch(currentRobotType){
             case BASHER:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case BEAVER:
                 if (getDistanceSquared(this.myHQ) < 50){
@@ -498,6 +499,7 @@ public class RobotPlayer {
             	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case LAUNCHER:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case MINER:
                 if (getDistanceSquared(this.myHQ) < 50){
@@ -508,11 +510,12 @@ public class RobotPlayer {
             case MISSILE:
                 break;
             case SOLDIER:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             case TANK:
+            	optimalDirections = getDirectionsToward(this.theirHQ);
                 break;
             default:
-                //error
             } //Done RobotType specific actions.
             return optimalDirections;
 
@@ -812,6 +815,13 @@ public class RobotPlayer {
         // true, I'm in the convoy or going to be
         // false, no place in the convoy for me
         public boolean formSupplyConvoy() {
+        	try {
+	            if (rc.readBroadcast(smuIndices.STRATEGY) == smuConstants.STRATEGY_DRONE_CONTAIN) {
+	            	return false;
+	            }
+            } catch (GameActionException e1) {
+	            e1.printStackTrace();
+            }
     		Direction directionForChain = getSupplyConvoyDirection(myHQ);
         	RobotInfo minerAtEdge = getUnitAtEdgeOfSupplyRangeOf(RobotType.MINER, myHQ, directionForChain);
 
@@ -969,7 +979,14 @@ public class RobotPlayer {
         	if (myLocation.distanceSquaredTo(enemyHQ) > radiusFromHQ + 3) {
         		// move towards the HQ
         		try {
-	                moveOptimally();
+        			RobotInfo[] nearbyTeammates = rc.senseNearbyRobots(4, myTeam);
+        			int numAttackers = 0;
+        			for (RobotInfo teammate : nearbyTeammates) {
+        				if (!teammate.type.isBuilding && teammate.type != RobotType.MINER && teammate.type != RobotType.BEAVER) numAttackers++;
+        			}
+        			if (numAttackers >= getNumAttackersToContain() || rc.senseNearbyRobots(25, theirTeam).length == 0) {
+        				moveOptimally();
+        			}
                 } catch (GameActionException e) {
 	                e.printStackTrace();
                 }
@@ -982,7 +999,7 @@ public class RobotPlayer {
         			directionToGo = getCounterClockwiseDirection(myLocation, enemyHQ);
         		}
         		locationToGo = myLocation.add(directionToGo);
-        		if (rc.isPathable(RobotType.DRONE, locationToGo)) {
+        		if (rc.isPathable(myType, locationToGo)) {
         			if (isLocationSafe(locationToGo)) {
         				goToLocation(locationToGo);
         			} else {
@@ -1007,8 +1024,20 @@ public class RobotPlayer {
         	myContainPreviousLocation = myLocation;
         }
         
+        public int getNumAttackersToContain() {
+        	if (myType == RobotType.SOLDIER) {
+        		return 2;
+        	} else if (myType == RobotType.TANK) {
+        		return 1;
+        	} else {
+        		return 2;
+        	}
+        }
+        
         public boolean isLocationSafe(MapLocation location) {
-        	if (location.distanceSquaredTo(theirHQ) > RobotType.HQ.attackRadiusSquared) {
+        	int hqAttackRadius = RobotType.HQ.attackRadiusSquared;
+        	if (rc.senseEnemyTowerLocations().length >= 2) hqAttackRadius = 35;
+        	if (location.distanceSquaredTo(theirHQ) > hqAttackRadius) {
         		for (MapLocation tower : rc.senseEnemyTowerLocations()) {
         			if (location.distanceSquaredTo(tower) <= RobotType.TOWER.attackRadiusSquared) {
         				return false;
@@ -1075,6 +1104,7 @@ public class RobotPlayer {
         // Defend
         public boolean defendSelf() {
     		RobotInfo[] nearbyEnemies = getEnemiesInAttackRange();
+    		
     		if(nearbyEnemies != null && nearbyEnemies.length > 0) {
     			try {
     				if (rc.isWeaponReady()) {
@@ -1104,63 +1134,6 @@ public class RobotPlayer {
     		return false;
         }
         
-        public boolean defendTowerHoles() {
-        	int towerHoleX = -1;
-			try {
-				towerHoleX = rc.readBroadcast(smuIndices.TOWER_HOLES_BEGIN);
-			} catch (GameActionException e1) {
-				e1.printStackTrace();
-			}
-			boolean defendingHole = false;
-			if(towerHoleX != -1) {
-				int towerHolesIndex = smuIndices.TOWER_HOLES_BEGIN;
-				int towerHoleY;
-				do {
-					try {
-						towerHoleX = rc.readBroadcast(towerHolesIndex);
-						towerHolesIndex++;
-						towerHoleY = rc.readBroadcast(towerHolesIndex);
-						towerHolesIndex++;
-						if (towerHoleX != -1) {
-							MapLocation holeLocation = new MapLocation(towerHoleX, towerHoleY);
-							RobotInfo[] nearbyTeammates = rc.senseNearbyRobots(holeLocation, 5, myTeam);
-							if (nearbyTeammates.length < smuConstants.NUM_HOLE_PROTECTORS && rc.getLocation().distanceSquaredTo(holeLocation) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) {
-								defendingHole = true;
-								towerHoleX = -1;
-								goToLocation(holeLocation);    									
-							}
-						}
-					} catch (GameActionException e) {
-						e.printStackTrace();
-					}
-				} while(towerHoleX != -1);
-			}
-			return defendingHole;
-        }
-        
-        public boolean defendTowers() {
-        	MapLocation[] myTowers = rc.senseTowerLocations();
-			MapLocation closestTower = null;
-            try {
-                closestTower = getRallyPoint();
-            } catch (GameActionException e) {
-                e.printStackTrace();
-            }
-			int closestDist = Integer.MAX_VALUE;
-			for (MapLocation tower : myTowers) {
-				RobotInfo[] nearbyRobots = getTeammatesNearTower(tower);
-				if (nearbyRobots.length < smuConstants.NUM_TOWER_PROTECTORS && rc.getLocation().distanceSquaredTo(tower) <= smuConstants.DISTANCE_TO_START_PROTECTING_SQUARED) { //tower underprotected
-					int dist = tower.distanceSquaredTo(theirHQ);
-					if (dist < closestDist) {
-						closestDist = dist;
-						closestTower = tower;
-					}				
-				}
-			}
-			goToLocation(closestTower);
-			return true;
-        }
-        
         public boolean defend() {
     		// A1, Protect Self
         	boolean isProtectingSelf = defendSelf();
@@ -1174,23 +1147,6 @@ public class RobotPlayer {
         		return true;
         	}
 
-            if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack &&
-    		        Clock.getRoundNum() > smuConstants.roundToDefendTowers &&
-    		        myType != RobotType.BEAVER && myType != RobotType.MINER) {
-    			// B1, Protect Holes Between Towers
-    			boolean isProtectingHoles = defendTowerHoles();
-    			if (isProtectingHoles) {
-    				return true;
-    			}
-    			
-    			if(myType != RobotType.BEAVER && myType != RobotType.MINER) {
-    				// B2, Protect Towers
-    				boolean isProtectingTowers = defendTowers();
-    				if (isProtectingTowers) {
-    					return true;
-    				}
-    			}
-    		}
     		return false;
     	}
         
@@ -1333,9 +1289,6 @@ public class RobotPlayer {
             return weight;
         }
         
-    	/**
-    	 *  Simple helpers, more logic for these later
-    	 */
     	public RobotInfo[] getEnemiesInAttackRange() {
     		return rc.senseNearbyRobots(myRange, theirTeam);
     	}
@@ -1347,17 +1300,23 @@ public class RobotPlayer {
 	            		&& rc.getLocation().distanceSquaredTo(location)<3) { // 3 squares
 	            	return;
 	            }
+	            Direction direction = getMoveDir(location);
+	            RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(rc.getLocation().add(direction), RobotType.TOWER.attackRadiusSquared, theirTeam);
+	            boolean towersNearby = false;
+	            for (RobotInfo enemy : nearbyEnemies) {
+	            	if (enemy.type == RobotType.TOWER || enemy.type == RobotType.HQ) {
+	            		towersNearby = true;
+	            		break;
+	            	}
+	            }
+	            if (!towersNearby || Clock.getRoundNum() > smuConstants.roundToLaunchAttack) {
+	            	if (direction != null && rc.isCoreReady() && rc.canMove(direction) && Clock.getBytecodesLeft() > 55) {
+	            		rc.move(direction);
+	            	}
+	            }
             } catch (GameActionException e1) {
 	            e1.printStackTrace();
             }
-			Direction direction = getMoveDir(location);
-			if (direction != null && rc.isCoreReady() && rc.canMove(direction) && Clock.getBytecodesLeft() > 55) {
-				try {
-					rc.move(direction);
-				} catch (GameActionException e) {
-					e.printStackTrace();
-				}
-			}
     	}
     	
     	public RobotInfo[] getRobotsEngagedInAttack() {
@@ -1365,7 +1324,7 @@ public class RobotPlayer {
     		boolean hasEnemy = false;
     		boolean hasFriendly = false;
     		for (RobotInfo robot : nearbyRobots) {
-    			if(robot.team == theirTeam) {
+    			if(robot.team == theirTeam && robot.type != RobotType.TOWER) {
     				hasEnemy = true;
     				if (hasFriendly) {
     					return nearbyRobots;
@@ -1797,16 +1756,16 @@ public class RobotPlayer {
                 strategyBEAVER = new int[] {10, 0, 100};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
-                strategyDRONE = new int[] {50, 100, 1800};
+                strategyDRONE = new int[] {100, 100, 1800};
                 strategyHANDWASHSTATION = new int[] {3, 1700, 1900};
-                strategyHELIPAD = new int[] {4, 1, 800};
+                strategyHELIPAD = new int[] {2, 1, 800};
                 strategyHQ = new int[] {0, 0, 0};
                 strategyLAUNCHER = new int[] {0, 1100, 1700};
                 strategyMINER = new int[] {20, 100, 500};
                 strategyMINERFACTORY = new int[] {2, 100, 2000};
                 strategyMISSILE = new int[] {0, 0, 0};
                 strategySOLDIER = new int[] {0, 200, 1200};
-                strategySUPPLYDEPOT = new int[] {10, 700, 1500};
+                strategySUPPLYDEPOT = new int[] {4, 700, 1500};
                 strategyTANK = new int[] {0, 1100, 1800};
                 strategyTANKFACTORY = new int[] {0, 1000, 1400};
                 strategyTECHNOLOGYINSTITUTE = new int[] {0, 0, 0};
@@ -2129,7 +2088,11 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
           	if (!defend()) {
-        		moveToRallyPoint();
+          		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+          			contain();
+          		} else {
+          			moveToRallyPoint();
+          		}
         	}
         	transferSupplies();
             rc.yield();
@@ -2143,16 +2106,11 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-    		boolean hasTakenAction = false;
-        	if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
-    			hasTakenAction = defendTowerHoles();
-        		if (!hasTakenAction) {
-    				hasTakenAction = defendTowers();
-    			}
-    		}
-        	if (!hasTakenAction) {
-        		moveToRallyPoint();
-        	}
+      		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+      			contain();
+      		} else {
+      			moveToRallyPoint();
+      		}
             transferSupplies();
             rc.yield();
         }
@@ -2166,7 +2124,11 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
             if (!defend()) {
-                moveToRallyPoint();
+          		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
+          			contain();
+          		} else {
+          			moveToRallyPoint();
+          		}
             }
             transferSupplies();
             rc.yield();
@@ -2181,7 +2143,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
         	if (!defendSelf()) {
-        		if (rc.readBroadcast(smuIndices.STRATEGY) == smuConstants.STRATEGY_DRONE_CONTAIN && Clock.getRoundNum() < 1800) {
+        		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
         			contain();
         		} else {
         			moveToRallyPoint();
@@ -2273,15 +2235,19 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-            if (Clock.getRoundNum() > smuConstants.roundToLaunchAttack && rc.getMissileCount() > 0) {
+        	boolean launched = false;
+            if (rc.getMissileCount() > 0) {
                 Direction targetDir = getDirOfLauncherTarget();
                 if (targetDir != null && rc.isWeaponReady()){
                     if (rc.canLaunch(targetDir)){
                         rc.launchMissile(targetDir);
+                        launched = true;
                     }
                 }
             }
-            moveToRallyPoint();
+            if (!launched) {
+            	contain();
+            }
             rc.yield();
         }
     }
