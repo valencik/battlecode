@@ -279,18 +279,15 @@ public class RobotPlayer {
 
         //Will return a single direction for spawning. (Uses getDirectionsToward())
         public Direction getSpawnDir(RobotType type) {
-            Direction[] dirs = getDirectionsToward(this.theirHQ);
-            for (Direction d : dirs) {
+            Direction[] arrayOfDirections = new Direction[]{Direction.EAST, Direction.NORTH, Direction.NORTH_EAST, Direction.NORTH_WEST, 
+                    Direction.SOUTH, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.WEST};
+             
+            // Shuffle the elements in the array
+            Collections.shuffle(Arrays.asList(arrayOfDirections));
+            
+            for (Direction d : arrayOfDirections) {
                 if (rc.canSpawn(d, type)) {
                     return d;
-                }
-            }
-            dirs = getDirectionsToward(this.myHQ);
-            for (Direction d : dirs) {
-                if (rc.canSpawn(d, type)) {
-                    return d;
-                } else {
-//                    //System.out.println("Could not find valid spawn location!");
                 }
             }
             return null;
@@ -475,9 +472,10 @@ public class RobotPlayer {
         public Direction[] getOptimalDirections() throws GameActionException {
             //  The switch statement should result in an array of directions that make sense
             //for the RobotType. Safety is considered in moveOptimally()
-
             RobotType currentRobotType = rc.getType();
-            Direction[] optimalDirections = null;
+            
+            Direction[] optimalDirections = Direction.values();
+            Collections.shuffle(Arrays.asList(optimalDirections));
 
             switch(currentRobotType){
             case BASHER:
@@ -487,7 +485,6 @@ public class RobotPlayer {
                 if (getDistanceSquared(this.myHQ) < 50){
                     optimalDirections = getDirectionsAway(this.myHQ);    
                 }
-                optimalDirections = Direction.values();
                 break;
             case COMMANDER:
                 break;
@@ -501,9 +498,8 @@ public class RobotPlayer {
                 break;
             case MINER:
                 if (getDistanceSquared(this.myHQ) < 50){
-                    optimalDirections = getDirectionsToward(this.myHQ);    
+                    optimalDirections = getDirectionsAway(this.myHQ);
                 }
-                optimalDirections = Direction.values();
                 break;
             case MISSILE:
                 break;
@@ -1333,6 +1329,7 @@ public class RobotPlayer {
 	            	return;
 	            }
 	            Direction direction = getMoveDir(location);
+	            if (direction == null) return;
 	            RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(rc.getLocation().add(direction), RobotType.TOWER.attackRadiusSquared, theirTeam);
 	            boolean towersNearby = false;
 	            for (RobotInfo enemy : nearbyEnemies) {
