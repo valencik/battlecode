@@ -472,9 +472,10 @@ public class RobotPlayer {
         public Direction[] getOptimalDirections() throws GameActionException {
             //  The switch statement should result in an array of directions that make sense
             //for the RobotType. Safety is considered in moveOptimally()
-
             RobotType currentRobotType = rc.getType();
-            Direction[] optimalDirections = null;
+            
+            Direction[] optimalDirections = Direction.values();
+            Collections.shuffle(Arrays.asList(optimalDirections));
 
             switch(currentRobotType){
             case BASHER:
