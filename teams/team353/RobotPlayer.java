@@ -1255,6 +1255,7 @@ public class RobotPlayer {
 	            	return;
 	            }
 	            Direction direction = getMoveDir(location);
+	            if (direction == null) return;
 	            RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(rc.getLocation().add(direction), RobotType.TOWER.attackRadiusSquared, theirTeam);
 	            boolean towersNearby = false;
 	            for (RobotInfo enemy : nearbyEnemies) {
