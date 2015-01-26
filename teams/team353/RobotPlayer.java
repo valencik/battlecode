@@ -894,7 +894,23 @@ public class RobotPlayer {
         		radiusFromHQ = 35;
         	}
         	
-        	if (myLocation.distanceSquaredTo(enemyHQ) > radiusFromHQ + 3) {
+        	MapLocation toBeContained = null;
+    		RobotInfo[] enemies = rc.senseNearbyRobots(myType.sensorRadiusSquared, theirTeam);
+    		for (RobotInfo enemy : enemies) {
+    			if (myLocation.directionTo(enemy.location) != myLocation.directionTo(enemyHQ)) {
+    				toBeContained = enemy.location;
+    				break;
+    			}
+    		}
+    		boolean attackingEnemy = false;
+        	if (toBeContained != null) {
+    			Direction directionToGo = myLocation.directionTo(toBeContained);
+    			if (isLocationSafe(myLocation.add(directionToGo))) {
+    				attackingEnemy = true;
+    				goToLocation(myLocation.add(directionToGo));
+    			}
+        	}
+        	if (!attackingEnemy && myLocation.distanceSquaredTo(enemyHQ) > radiusFromHQ + 3) {
         		// move towards the HQ
         		try {
         			RobotInfo[] nearbyTeammates = rc.senseNearbyRobots(4, myTeam);
@@ -911,6 +927,7 @@ public class RobotPlayer {
         	} else {
         		MapLocation locationToGo = null;
         		Direction directionToGo = null;
+
         		if (myContainDirection == smuConstants.CLOCKWISE) {
         			directionToGo = getClockwiseDirection(myLocation, enemyHQ);
         		} else {
@@ -946,6 +963,8 @@ public class RobotPlayer {
         	if (myType == RobotType.SOLDIER) {
         		return 2;
         	} else if (myType == RobotType.TANK) {
+        		return 1;
+        	} else if (myType == RobotType.DRONE) {
         		return 1;
         	} else {
         		return 2;
@@ -1625,7 +1644,6 @@ public class RobotPlayer {
             //STRATEGY_TANKS_AND_LAUNCHERS = 4;
             //STRATEGY_LAUNCHERS = 5;
             //STRATEGY_TANK_SWARM = 6;
-            //strategy = 1;
             rc.broadcast(smuIndices.STRATEGY, strategy);
             hasChosenStrategyPrior = true;
         }
@@ -1712,7 +1730,7 @@ public class RobotPlayer {
                 strategyBEAVER = new int[] {10, 0, 100};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
-                strategyDRONE = new int[] {50, 100, 1800};
+                strategyDRONE = new int[] {100, 100, 1800};
                 strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
                 strategyHELIPAD = new int[] {1, 300};
                 strategyHQ = new int[] {0};
