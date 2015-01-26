@@ -279,18 +279,15 @@ public class RobotPlayer {
 
         //Will return a single direction for spawning. (Uses getDirectionsToward())
         public Direction getSpawnDir(RobotType type) {
-            Direction[] dirs = getDirectionsToward(this.theirHQ);
-            for (Direction d : dirs) {
+            Direction[] arrayOfDirections = new Direction[]{Direction.EAST, Direction.NORTH, Direction.NORTH_EAST, Direction.NORTH_WEST, 
+                    Direction.SOUTH, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.WEST};
+             
+            // Shuffle the elements in the array
+            Collections.shuffle(Arrays.asList(arrayOfDirections));
+            
+            for (Direction d : arrayOfDirections) {
                 if (rc.canSpawn(d, type)) {
                     return d;
-                }
-            }
-            dirs = getDirectionsToward(this.myHQ);
-            for (Direction d : dirs) {
-                if (rc.canSpawn(d, type)) {
-                    return d;
-                } else {
-//                    //System.out.println("Could not find valid spawn location!");
                 }
             }
             return null;
