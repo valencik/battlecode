@@ -484,7 +484,6 @@ public class RobotPlayer {
                 if (getDistanceSquared(this.myHQ) < 50){
                     optimalDirections = getDirectionsAway(this.myHQ);    
                 }
-                optimalDirections = Direction.values();
                 break;
             case COMMANDER:
                 break;
@@ -498,9 +497,8 @@ public class RobotPlayer {
                 break;
             case MINER:
                 if (getDistanceSquared(this.myHQ) < 50){
-                    optimalDirections = getDirectionsToward(this.myHQ);    
+                    optimalDirections = getDirectionsAway(this.myHQ);
                 }
-                optimalDirections = Direction.values();
                 break;
             case MISSILE:
                 break;
