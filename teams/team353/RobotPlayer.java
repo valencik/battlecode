@@ -444,7 +444,7 @@ public class RobotPlayer {
                         //currentDirection = currentDirection.rotateLeft();
                         attemptForDirection++;
                         if (attemptForDirection == optimalDirections.length) {
-//                            //System.out.println("No suitable direction found!");
+                            System.out.println("No suitable direction found!");
                             return;
                         }
                     }else{
@@ -964,6 +964,84 @@ public class RobotPlayer {
         		return true;
         	}
         	return false;
+        }
+        
+        //TODO        
+        public void mineOptimally() throws GameActionException {
+            MapLocation myLocation = rc.getLocation();
+
+            if (rc.senseOre(myLocation) > 0){
+                if (rc.isCoreReady()){
+                    rc.mine();
+                }
+                return;
+            }
+
+            MapLocation[] possibleSites = myLocation.getAllMapLocationsWithinRadiusSq(rc.getLocation(), 2);
+            List<MapLocation> likelyMineSites = new ArrayList<MapLocation>();
+            
+            for (MapLocation site : possibleSites){
+                TerrainTile siteTerrainTile = rc.senseTerrainTile(site);
+                if(rc.isPathable(myType, site) ||
+                        siteTerrainTile != TerrainTile.OFF_MAP ||
+                        siteTerrainTile ==TerrainTile.NORMAL){
+                    likelyMineSites.add(site);
+                }
+            }
+            MapLocation[] possibleMineSites = likelyMineSites.toArray(new MapLocation[likelyMineSites.size()]);
+            
+            //Sort possibleMineSites based on ore
+            Arrays.sort(possibleMineSites, new Comparator<MapLocation>() {
+                public int compare(MapLocation location1, MapLocation location2) {
+                    double ore1 = 0;
+                    double ore2 = 0;
+                    if (location1 != null) ore1 = rc.senseOre(location1);
+                    if (location2 != null) ore2 = rc.senseOre(location2);
+                    return Double.compare(ore1, ore2);
+                }
+            });
+            
+            System.out.println("#"+possibleMineSites.length+" 0th "+possibleMineSites[0].toString());
+            
+            if (rc.senseOre(possibleMineSites[0]) > 0) {
+                int numAdjacentMiners = 0;
+                double siteOre;
+                double siteWeight;
+                Direction siteDir;
+                
+                //Get robots in the 5x5 square we are observing
+                RobotInfo[] nearbyRobots = rc.senseNearbyRobots(8, myTeam);
+                //Check possibleMineSites for adjacencies to other miners
+                for (MapLocation site : possibleMineSites) {
+                    numAdjacentMiners = 0;
+                    for (RobotInfo robot : nearbyRobots) {
+                        if (robot.type == RobotType.MINER
+                                && site.distanceSquaredTo(robot.location) <= 2) {
+                            //Another miner is too close
+                            numAdjacentMiners++;
+                            if (numAdjacentMiners >= 3) {
+                                System.out.println("MINER: Too many adjacent miners for site "+site.toString());
+                                site = null;
+                                break;
+                            }
+                        }
+                    }//end nearbyRobots
+                    if (site != null){
+                        siteOre = rc.senseOre(site) / 60.0;
+                        siteWeight = siteOre - 0.25*numAdjacentMiners;
+                        siteDir = myLocation.directionTo(site);
+                        double roll = rand.nextDouble();
+                        //System.out.println("MINER: rolled "+roll+" against "+siteWeight+" for Dir-"+siteDir.toString());
+                        if (roll < siteWeight && rc.isCoreReady() && rc.canMove(siteDir)){
+                            rc.move(siteDir);
+                        }
+                    }
+                }//end possibleMineSites
+            } else {
+                System.out.println("MINER: No ore nearby, we need to move elsewhere");
+                moveOptimally();
+            }
+
         }
         
         public Direction[] breakdownDirection(Direction direction) {
@@ -2025,21 +2103,12 @@ public class RobotPlayer {
     		}
     		if (!inConvoy) {
     			if (!defend()) {
-    				if (rc.isCoreReady()) {
-    					//mine
-    					if (rc.senseOre(rc.getLocation()) > 0) {
-    						rc.mine();
-    					}
-    					else {
-    						moveOptimally();
-    					}
-    				} 		
+    			    //System.out.println("Mining optimally");
+    			    mineOptimally();		
     			}
     		} else if(!defendSelf()) {
-				if (rc.isCoreReady()) {
-					if (rc.senseOre(rc.getLocation()) > 0) {
-						rc.mine();
-					}
+				if (rc.isCoreReady() && rc.senseOre(rc.getLocation()) > 0) {					
+				    rc.mine();
 				} 	
     		}
     		transferSupplies();
