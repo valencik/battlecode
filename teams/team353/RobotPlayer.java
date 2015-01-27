@@ -251,28 +251,6 @@ public class RobotPlayer {
             return null;
         }
 
-        public Direction getMoveDirRand(MapLocation dest) {
-            //TODO return a random direction
-            Direction[] dirs = getDirectionsToward(dest);
-            for (Direction d : dirs) {
-                if (rc.canMove(d)) {
-                    return d;
-                }
-            }
-            return null;
-        }
-
-        public Direction getMoveDirAwayRand(MapLocation dest) {
-            //TODO return a random direction
-            Direction[] dirs = getDirectionsAway(dest);
-            for (Direction d : dirs) {
-                if (rc.canMove(d)) {
-                    return d;
-                }
-            }
-            return null;
-        }
-
         //Will return a single direction for spawning. (Uses getDirectionsToward())
         public Direction getSpawnDir(RobotType type) {
             Direction[] arrayOfDirections = new Direction[]{Direction.EAST, Direction.NORTH, Direction.NORTH_EAST, Direction.NORTH_WEST, 
