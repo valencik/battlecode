@@ -467,7 +467,7 @@ public class RobotPlayer {
                         //currentDirection = currentDirection.rotateLeft();
                         attemptForDirection++;
                         if (attemptForDirection == optimalDirections.length) {
-                            //System.out.println("No suitable direction found!");
+//                            //System.out.println("No suitable direction found!");
                             return;
                         }
                     }else{
@@ -668,7 +668,7 @@ public class RobotPlayer {
 
             //If there is something in the queue and we can not replace it, then return
             if (queue != 0 && !buildingsOutrankUnits){
-                System.out.println("Queue full, can't outrank");
+//                System.out.println("Queue full, can't outrank");
                 return;
             }
 
@@ -676,7 +676,7 @@ public class RobotPlayer {
             if (Arrays.asList(arrayOfStructures).contains(IntToRobotType(queue))) {
                 //Build it if we can afford it
                 if (ore > IntToRobotType(queue).oreCost) {
-                    System.out.println("INFO: Satisfying queue. ("+IntToRobotType(queue).name()+")");
+//                    System.out.println("INFO: Satisfying queue. ("+IntToRobotType(queue).name()+")");
                     buildUnit(IntToRobotType(queue));
                 }
                 //Return either way, we can't replace buildings in the queue
@@ -691,11 +691,11 @@ public class RobotPlayer {
                 if (weightOfStructure == 1.0){
                     if (ore > IntToRobotType(intStructure).oreCost){
                         buildUnit(IntToRobotType(intStructure));
-                        System.out.println("Tried to build "+ IntToRobotType(intStructure));
+//                        System.out.println("Tried to build "+ IntToRobotType(intStructure));
                     } else {
                         rc.broadcast(smuIndices.freqQueue, intStructure);
-                        System.out.println("Scheduled a " + IntToRobotType(intStructure).name() +
-                                ". Need " + (IntToRobotType(intStructure).oreCost-ore) + " more ore.");
+//                        System.out.println("Scheduled a " + IntToRobotType(intStructure).name() +
+//                                ". Need " + (IntToRobotType(intStructure).oreCost-ore) + " more ore.");
                     }
                     return;
                 }                        
@@ -1064,7 +1064,7 @@ public class RobotPlayer {
                         return Double.compare(ore2, ore1); //descending ORE-der... heh heh heh
                     }
                 });
-                if(debug)System.out.println("#"+possibleMineSites.length+" 0th: "+rc.senseOre(possibleMineSites[0])+" @ "+possibleMineSites[0].toString());
+//                if(debug)System.out.println("#"+possibleMineSites.length+" 0th: "+rc.senseOre(possibleMineSites[0])+" @ "+possibleMineSites[0].toString());
 
                 int numAdjacentMiners = 0;
                 double siteOre;
@@ -1073,21 +1073,21 @@ public class RobotPlayer {
 
                 //Get robots in the 5x5 square we are observing
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(8, myTeam);
-                if(debug)System.out.println("##"+possibleMineSites.length+" nearbyRobots: "+nearbyRobots.length);
+//                if(debug)System.out.println("##"+possibleMineSites.length+" nearbyRobots: "+nearbyRobots.length);
                 //Check possibleMineSites for adjacencies to other miners
                 for (int i =0; i < possibleMineSites.length; i++) {
                     MapLocation site = possibleMineSites[i];
                     numAdjacentMiners = 0;
-                    if(debug)System.out.println("###"+possibleMineSites.length+" ith "+possibleMineSites[i].toString()+" nearbyRobots: "+nearbyRobots.length);
+//                    if(debug)System.out.println("###"+possibleMineSites.length+" ith "+possibleMineSites[i].toString()+" nearbyRobots: "+nearbyRobots.length);
 
                     for (int j = 0; j < nearbyRobots.length; j++) {
-                        if(debug)System.out.println("####MINER: site: "+site.toString() + " Robot: "+nearbyRobots[j].location.toString());
+//                        if(debug)System.out.println("####MINER: site: "+site.toString() + " Robot: "+nearbyRobots[j].location.toString());
                         if (nearbyRobots[j].type == RobotType.MINER
                                 && site.distanceSquaredTo(nearbyRobots[j].location) <= 2) {
                             // Another miner is too close
                             numAdjacentMiners++;
                             if (numAdjacentMiners >= 2) {
-                                if(debug)System.out.println("#####MINER: Too many adjacent miners for site "+site.toString());
+//                                if(debug)System.out.println("#####MINER: Too many adjacent miners for site "+site.toString());
                                 site = null;
                                 break;
                             }
@@ -1098,7 +1098,7 @@ public class RobotPlayer {
                         siteWeight = siteOre - 0.25*numAdjacentMiners;
                         siteDir = myLocation.directionTo(site);
                         double roll = rand.nextDouble();
-                        if(debug)System.out.println("MINER: rolled "+roll+" against "+siteWeight+" for Dir-"+siteDir.toString());
+//                        if(debug)System.out.println("MINER: rolled "+roll+" against "+siteWeight+" for Dir-"+siteDir.toString());
                         if (roll < siteWeight){
                             moveOptimally(siteDir);
                             return;
@@ -1114,7 +1114,7 @@ public class RobotPlayer {
         
         public void wideSearchForOre() throws GameActionException {
             boolean debug = false;
-            if (debug)System.out.println("WIDESEARCH: Bytecode Remaining: "+Clock.getBytecodesLeft()+" on round "+Clock.getRoundNum());
+//            if (debug)System.out.println("WIDESEARCH: Bytecode Remaining: "+Clock.getBytecodesLeft()+" on round "+Clock.getRoundNum());
             MapLocation myLocation = rc.getLocation();
             MapLocation[] bigSearch = MapLocation.getAllMapLocationsWithinRadiusSq(myLocation, 100);
             
@@ -1130,7 +1130,7 @@ public class RobotPlayer {
                             maxOre = possibleMineSiteOreValue;
                         }
                         if (Clock.getBytecodesLeft() <= 800 && bestMineSite != null){
-                            if(debug)System.out.println("WSFOUND: Bytecode Remaining: "+Clock.getBytecodesLeft()+" moving to "+bestMineSite.toString());
+//                            if(debug)System.out.println("WSFOUND: Bytecode Remaining: "+Clock.getBytecodesLeft()+" moving to "+bestMineSite.toString());
                             moveOptimally(getMoveDir(bestMineSite));
                             return;
                         }
@@ -1139,7 +1139,7 @@ public class RobotPlayer {
             }
 
             // Failed, move randomly
-            if(debug)System.out.println("WSFAILED: Bytecode Remaining: "+Clock.getBytecodesLeft()+" on round "+Clock.getRoundNum());
+//            if(debug)System.out.println("WSFAILED: Bytecode Remaining: "+Clock.getBytecodesLeft()+" on round "+Clock.getRoundNum());
             if (rand.nextDouble() < 0.5) {
                 moveToRallyPoint();
             } else {
@@ -1373,15 +1373,15 @@ public class RobotPlayer {
                 
                 //Return zero if unit is not desired. (Divide by zero protection)
                 if (desiredAmount == 0) {
-                    //System.out.println("Error: No desired "+IntToRobotType(typeInt));
+//                    //System.out.println("Error: No desired "+IntToRobotType(typeInt));
                     return 0;
                 }
                 if (roundToBeginSpawning >= roundToFinishSpawning) {
-                    //System.out.println("Error: build > finish for: "+IntToRobotType(typeInt));
+//                    //System.out.println("Error: build > finish for: "+IntToRobotType(typeInt));
                     return 0;
                 }
                 if (round < roundToBeginSpawning) {
-                    //System.out.println("Error: Too early for "+IntToRobotType(typeInt));
+//                    //System.out.println("Error: Too early for "+IntToRobotType(typeInt));
                     return 0;
                 }
                 
@@ -1391,7 +1391,7 @@ public class RobotPlayer {
                 double y = (double) currentAmount / (double) desiredAmount;
                 weight = smuConstants.weightScaleMagic
                         * Math.pow(x, (smuConstants.weightExponentMagic + y));
-                //System.out.println("type: "+IntToRobotType(typeInt)+" x: " + x + " y: " + y + " weight: " + weight);
+//                //System.out.println("type: "+IntToRobotType(typeInt)+" x: " + x + " y: " + y + " weight: " + weight);
                 return weight;
             } //end units
             
@@ -1416,7 +1416,7 @@ public class RobotPlayer {
                     if (round < nextRoundToBuild) {
                         return 0.0;
                     }
-                    System.out.println("ERROR: Unexpected return path in getWeightOfRobotType " + type.name());
+//                    System.out.println("ERROR: Unexpected return path in getWeightOfRobotType " + type.name());
                     return weight;
                 } else if(currentAmount >= desiredAmount && currentAmount <= 4*desiredAmount && rc.getTeamOre() > 600) {
                     int strategy = rc.readBroadcast(smuIndices.STRATEGY);
@@ -1436,7 +1436,7 @@ public class RobotPlayer {
                 }
             } //end structures
             
-            System.out.println("ERROR: Unexpected return path in getWeightOfRobotType");
+//            System.out.println("ERROR: Unexpected return path in getWeightOfRobotType");
             return weight;
         }
         
@@ -1800,7 +1800,7 @@ public class RobotPlayer {
             int[] strategyTRAININGFIELD = new int[3];
 
             if (strategy == smuConstants.STRATEGY_TANKS_AND_SOLDIERS) {
-                System.out.println("COMPUTE STRATEGY: Tanks and Soldiers");
+//                System.out.println("COMPUTE STRATEGY: Tanks and Soldiers");
                 strategyAEROSPACELAB = new int[] {0};
                 strategyBARRACKS = new int[] {100, 650, 800};
                 strategyBASHER = new int[] {50, 1200, 1700};
@@ -1824,7 +1824,7 @@ public class RobotPlayer {
                 strategyTOWER = new int[] {0};
                 strategyTRAININGFIELD = new int[] {0};
             } else if(strategy == smuConstants.STRATEGY_DRONE_CONTAIN) {
-                System.out.println("COMPUTE STRATEGY: Drone Contain");
+//                System.out.println("COMPUTE STRATEGY: Drone Contain");
                 strategyAEROSPACELAB = new int[] {0};
                 strategyBARRACKS = new int[] {0};
                 strategyBASHER = new int[] {0, 0, 0};
@@ -2071,7 +2071,7 @@ public class RobotPlayer {
     		}
     		if (!inConvoy) {
     			if (!defend()) {
-    			    //System.out.println("Mining optimally");
+//    			    //System.out.println("Mining optimally");
     			    mineOptimally();		
     			}
     		} else if(!defendSelf()) {
