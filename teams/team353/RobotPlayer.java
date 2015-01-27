@@ -1037,7 +1037,7 @@ public class RobotPlayer {
                     }
                 });
 
-                System.out.println("#"+possibleMineSites.length+" 0th: "+rc.senseOre(possibleMineSites[0])+" @ "+possibleMineSites[0].toString());
+                //System.out.println("#"+possibleMineSites.length+" 0th: "+rc.senseOre(possibleMineSites[0])+" @ "+possibleMineSites[0].toString());
 
 
                 int numAdjacentMiners = 0;
@@ -1047,7 +1047,7 @@ public class RobotPlayer {
 
                 //Get robots in the 5x5 square we are observing
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(8, myTeam);
-                System.out.println("##"+possibleMineSites.length+" nearbyRobots: "+nearbyRobots.length);
+                //System.out.println("##"+possibleMineSites.length+" nearbyRobots: "+nearbyRobots.length);
                 //Check possibleMineSites for adjacencies to other miners
                 for (int i =0; i < possibleMineSites.length; i++) {
                     MapLocation site = possibleMineSites[i];
@@ -1063,7 +1063,7 @@ public class RobotPlayer {
                             //Another miner is too close
                             numAdjacentMiners++;
                             if (numAdjacentMiners >= 2) {
-                                System.out.println("#####MINER: Too many adjacent miners for site "+site.toString());
+                                //System.out.println("#####MINER: Too many adjacent miners for site "+site.toString());
                                 site = null;
                                 break;
                             }
