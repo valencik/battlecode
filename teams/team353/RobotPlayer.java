@@ -1082,8 +1082,8 @@ public class RobotPlayer {
                         siteDir = myLocation.directionTo(site);
                         double roll = rand.nextDouble();
                         if(debug)System.out.println("MINER: rolled "+roll+" against "+siteWeight+" for Dir-"+siteDir.toString());
-                        if (roll < siteWeight && rc.isCoreReady() && rc.canMove(siteDir)){
-                            rc.move(siteDir);
+                        if (roll < siteWeight){
+                            moveOptimally(siteDir);
                             return;
                         }
                     }
@@ -1114,7 +1114,7 @@ public class RobotPlayer {
                         }
                         if (Clock.getBytecodesLeft() <= 800 && bestMineSite != null){
                             if(debug)System.out.println("WSFOUND: Bytecode Remaining: "+Clock.getBytecodesLeft()+" moving to "+bestMineSite.toString());
-                            goToLocation(bestMineSite);
+                            moveOptimally(getMoveDir(bestMineSite));
                             return;
                         }
                     }
