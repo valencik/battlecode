@@ -12,9 +12,9 @@ public class RobotPlayer {
 		
 		public static int roundToLaunchAttack = 1600;
 		public static int roundToDefendTowers = 500;
-		public static int roundToFormSupplyConvoy = 400; // roundToBuildSOLDIERS;
+		public static int roundToFormSupplyConvoy = 1200; // roundToBuildSOLDIERS;
 		public static int RADIUS_FOR_SUPPLY_CONVOY = 2;
-		public static int numTowersRemainingToAttackHQ = 1;
+		public static int numTowersRemainingToAttackHQ = 2;
 		public static double weightExponentMagic = 0.3;
 		public static double weightScaleMagic = 0.8;
 		
@@ -441,7 +441,7 @@ public class RobotPlayer {
                         //currentDirection = currentDirection.rotateLeft();
                         attemptForDirection++;
                         if (attemptForDirection == optimalDirections.length) {
-                            System.out.println("No suitable direction found!");
+                            //System.out.println("No suitable direction found!");
                             return;
                         }
                     }else{
@@ -973,50 +973,65 @@ public class RobotPlayer {
                 return;
             }
 
-            MapLocation[] possibleSites = myLocation.getAllMapLocationsWithinRadiusSq(rc.getLocation(), 2);
+            //MapLocation[] possibleSites = myLocation.getAllMapLocationsWithinRadiusSq(rc.getLocation(), 2);
+            Direction[] arrayOfDirections = new Direction[]{Direction.EAST, Direction.NORTH, Direction.NORTH_EAST, Direction.NORTH_WEST, 
+                    Direction.SOUTH, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.WEST};
             List<MapLocation> likelyMineSites = new ArrayList<MapLocation>();
+            int numOfPossibleSites = 0;
             
-            for (MapLocation site : possibleSites){
+            for (Direction dir : arrayOfDirections){
+                MapLocation site = myLocation.add(dir);
                 TerrainTile siteTerrainTile = rc.senseTerrainTile(site);
-                if(rc.isPathable(myType, site) ||
-                        siteTerrainTile != TerrainTile.OFF_MAP ||
-                        siteTerrainTile ==TerrainTile.NORMAL){
+                if(rc.isPathable(myType, site) &&
+                        siteTerrainTile != TerrainTile.OFF_MAP &&
+                        siteTerrainTile == TerrainTile.NORMAL &&
+                        rc.senseOre(site) > 0.0){
                     likelyMineSites.add(site);
+                    numOfPossibleSites++;
                 }
             }
-            MapLocation[] possibleMineSites = likelyMineSites.toArray(new MapLocation[likelyMineSites.size()]);
-            
-            //Sort possibleMineSites based on ore
-            Arrays.sort(possibleMineSites, new Comparator<MapLocation>() {
-                public int compare(MapLocation location1, MapLocation location2) {
-                    double ore1 = 0;
-                    double ore2 = 0;
-                    if (location1 != null) ore1 = rc.senseOre(location1);
-                    if (location2 != null) ore2 = rc.senseOre(location2);
-                    return Double.compare(ore1, ore2);
-                }
-            });
-            
-            System.out.println("#"+possibleMineSites.length+" 0th "+possibleMineSites[0].toString());
-            
-            if (rc.senseOre(possibleMineSites[0]) > 0) {
+
+            if (numOfPossibleSites > 0) {
+                MapLocation[] possibleMineSites = likelyMineSites.toArray(new MapLocation[likelyMineSites.size()]);
+
+                //Sort possibleMineSites based on ore
+                Arrays.sort(possibleMineSites, new Comparator<MapLocation>() {
+                    public int compare(MapLocation location1, MapLocation location2) {
+                        double ore1 = 0;
+                        double ore2 = 0;
+                        if (location1 != null) ore1 = rc.senseOre(location1);
+                        if (location2 != null) ore2 = rc.senseOre(location2);
+                        return Double.compare(ore2, ore1); //descending ORE-der... heh heh heh
+                    }
+                });
+
+                System.out.println("#"+possibleMineSites.length+" 0th: "+rc.senseOre(possibleMineSites[0])+" @ "+possibleMineSites[0].toString());
+
+
                 int numAdjacentMiners = 0;
                 double siteOre;
                 double siteWeight;
                 Direction siteDir;
-                
+
                 //Get robots in the 5x5 square we are observing
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(8, myTeam);
+                System.out.println("##"+possibleMineSites.length+" nearbyRobots: "+nearbyRobots.length);
                 //Check possibleMineSites for adjacencies to other miners
-                for (MapLocation site : possibleMineSites) {
+                for (int i =0; i < possibleMineSites.length; i++) {
+                    MapLocation site = possibleMineSites[i];
+                    //int nextIndex = i;
+                    //if (i != possibleMineSites.length -1) nextIndex = i+1;
                     numAdjacentMiners = 0;
-                    for (RobotInfo robot : nearbyRobots) {
-                        if (robot.type == RobotType.MINER
-                                && site.distanceSquaredTo(robot.location) <= 2) {
+                    //System.out.println("###"+possibleMineSites.length+" ith "+possibleMineSites[i].toString()+" nearbyRobots: "+nearbyRobots.length);
+
+                    for (int j = 0; j < nearbyRobots.length; j++) {
+                        //System.out.println("####MINER: site: "+site.toString() + " Robot: "+nearbyRobots[j].location.toString());
+                        if (nearbyRobots[j].type == RobotType.MINER
+                                && site.distanceSquaredTo(nearbyRobots[j].location) <= 2) {
                             //Another miner is too close
                             numAdjacentMiners++;
-                            if (numAdjacentMiners >= 3) {
-                                System.out.println("MINER: Too many adjacent miners for site "+site.toString());
+                            if (numAdjacentMiners >= 2) {
+                                System.out.println("#####MINER: Too many adjacent miners for site "+site.toString());
                                 site = null;
                                 break;
                             }
@@ -1030,12 +1045,22 @@ public class RobotPlayer {
                         //System.out.println("MINER: rolled "+roll+" against "+siteWeight+" for Dir-"+siteDir.toString());
                         if (roll < siteWeight && rc.isCoreReady() && rc.canMove(siteDir)){
                             rc.move(siteDir);
+                            return;
                         }
                     }
                 }//end possibleMineSites
+                if (rand.nextDouble() < 0.5) {
+                    moveToRallyPoint();
+                } else {
+                    moveOptimally(getDirectionsAway(this.myHQ));
+                }
             } else {
-                System.out.println("MINER: No ore nearby, we need to move elsewhere");
-                moveOptimally();
+                //System.out.println("MINER: No ore nearby. Bytecode Remaining: "+Clock.getBytecodesLeft());
+                if (rand.nextDouble() < 0.5) {
+                    moveToRallyPoint();
+                } else {
+                    moveOptimally(getDirectionsAway(this.myHQ));
+                }
             }
 
         }
@@ -1835,7 +1860,7 @@ public class RobotPlayer {
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {0, 100, 1800};
                 strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
-                strategyHELIPAD = new int[] {00};
+                strategyHELIPAD = new int[] {0};
                 strategyHQ = new int[] {0};
                 strategyLAUNCHER = new int[] {0, 0, 0};
                 strategyMINER = new int[] {30, 1, 500};
@@ -1858,7 +1883,7 @@ public class RobotPlayer {
                 strategyCOMPUTER = new int[] {0, 0, 0};
                 strategyDRONE = new int[] {0, 100, 1800};
                 strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
-                strategyHELIPAD = new int[] {1, 500, 1000};
+                strategyHELIPAD = new int[] {500};
                 strategyHQ = new int[] {0};
                 strategyLAUNCHER = new int[] {30, 1100, 1700};
                 strategyMINER = new int[] {30, 1, 500};
