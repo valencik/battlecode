@@ -800,9 +800,9 @@ public class RobotPlayer {
         		locationToGo = startLocation.add(directions[i], smuConstants.RADIUS_FOR_SUPPLY_CONVOY);
         		if (directions[i] != directionForChain && directions[i] != Direction.OMNI && directions[i] != Direction.NONE 
         				&& rc.senseTerrainTile(locationToGo) == TerrainTile.NORMAL) {
-        			RobotInfo robotInDirection;
+        			RobotInfo robotInDirection = null;
                     try {
-	                    robotInDirection = rc.senseRobotAtLocation(locationToGo);
+                        if (rc.canSenseLocation(locationToGo)) robotInDirection = rc.senseRobotAtLocation(locationToGo);
 	                    if (robotInDirection == null || !robotInDirection.type.isBuilding) {
 	                    	return directions[i];
 	                    }
