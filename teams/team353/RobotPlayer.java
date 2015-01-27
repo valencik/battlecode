@@ -1802,7 +1802,7 @@ public class RobotPlayer {
             if (strategy == smuConstants.STRATEGY_TANKS_AND_SOLDIERS) {
                 System.out.println("COMPUTE STRATEGY: Tanks and Soldiers");
                 strategyAEROSPACELAB = new int[] {0};
-                strategyBARRACKS = new int[] {100, 300, 650, 800};
+                strategyBARRACKS = new int[] {100, 650, 800};
                 strategyBASHER = new int[] {50, 1200, 1700};
                 strategyBEAVER = new int[] {10, 0, 0};
                 strategyCOMMANDER = new int[] {0, 0, 0};
@@ -1812,13 +1812,13 @@ public class RobotPlayer {
                 strategyHELIPAD = new int[] {0};
                 strategyHQ = new int[] {0};
                 strategyLAUNCHER = new int[] {0, 0, 0};
-                strategyMINER = new int[] {50, 1, 500};
+                strategyMINER = new int[] {40, 1, 500};
                 strategyMINERFACTORY = new int[] {1, 200};
                 strategyMISSILE = new int[] {0, 0, 0};
-                strategySOLDIER = new int[] {120, 200, 1200};
+                strategySOLDIER = new int[] {80, 200, 1200};
 //                strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
                 strategySUPPLYDEPOT = new int[] {1000, 1400, 1500};
-                strategyTANK = new int[] {20, 1100, 1800};
+                strategyTANK = new int[] {40, 500, 1800};
                 strategyTANKFACTORY = new int[] {400, 800};
                 strategyTECHNOLOGYINSTITUTE = new int[] {0};
                 strategyTOWER = new int[] {0};
