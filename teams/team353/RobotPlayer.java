@@ -534,21 +534,29 @@ public class RobotPlayer {
             double ore = rc.getTeamOre();
             int spawnTypeInt = RobotTypeToInt(spawnType);
             int spawnQueue = rc.readBroadcast(smuIndices.freqQueue);
+            int strategy = rc.readBroadcast(smuIndices.STRATEGY);
             
             int currentAmount = rc.readBroadcast(smuIndices.channel[spawnTypeInt]+0);
             int desiredAmount = rc.readBroadcast(smuIndices.channel[spawnTypeInt]+1);
             int roundToBeginSpawning = rc.readBroadcast(smuIndices.channel[spawnTypeInt]+2);
-            
+
             //Check if we actually need anymore spawnType units
-            if (round > roundToBeginSpawning && currentAmount < desiredAmount){
-                if(ore > myType.oreCost){
-                    if (spawnUnit(spawnType)) return true;
-                } else {
-                    //Add spawnType to queue
-                    if (spawnQueue == 0){
-                        rc.broadcast(smuIndices.freqQueue, spawnTypeInt);
+            if (round > roundToBeginSpawning){
+                if (currentAmount < desiredAmount || 
+                        (strategy == smuConstants.STRATEGY_DRONE_CONTAIN && spawnType == RobotType.DRONE) ||
+                        (strategy == smuConstants.STRATEGY_TANKS_AND_SOLDIERS && spawnType == RobotType.TANK) ||
+                        (strategy == smuConstants.STRATEGY_TANKS_AND_SOLDIERS && spawnType == RobotType.SOLDIER)
+                        ){
+
+                    if(ore > myType.oreCost){
+                        if (spawnUnit(spawnType)) return true;
+                    } else {
+                        //Add spawnType to queue
+                        if (spawnQueue == 0){
+                            rc.broadcast(smuIndices.freqQueue, spawnTypeInt);
+                        }
+                        return false;
                     }
-                    return false;
                 }
             }
             return false;
@@ -997,7 +1005,9 @@ public class RobotPlayer {
         //TODO        
         public void mineOptimally() throws GameActionException {
             MapLocation myLocation = rc.getLocation();
+            boolean debug = false;
 
+            // If you are sitting on ore, mine it!
             if (rc.senseOre(myLocation) > 0){
                 if (rc.isCoreReady()){
                     rc.mine();
@@ -1005,24 +1015,39 @@ public class RobotPlayer {
                 return;
             }
 
-            //MapLocation[] possibleSites = myLocation.getAllMapLocationsWithinRadiusSq(rc.getLocation(), 2);
             Direction[] arrayOfDirections = new Direction[]{Direction.EAST, Direction.NORTH, Direction.NORTH_EAST, Direction.NORTH_WEST, 
                     Direction.SOUTH, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.WEST};
             List<MapLocation> likelyMineSites = new ArrayList<MapLocation>();
             int numOfPossibleSites = 0;
             
+            MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
+
+            //Check all directions for safety, validity, and ore
             for (Direction dir : arrayOfDirections){
                 MapLocation site = myLocation.add(dir);
                 TerrainTile siteTerrainTile = rc.senseTerrainTile(site);
-                if(rc.isPathable(myType, site) &&
+
+                //check that the direction in front is not a tile that can be attacked by the enemy towers
+                boolean tileInFrontSafe = true;
+                for(MapLocation m: enemyTowers){
+                    if(m.distanceSquaredTo(site)<=RobotType.TOWER.attackRadiusSquared+1){
+                        tileInFrontSafe = false;
+                        break;
+                    }
+                }
+
+                if(tileInFrontSafe &&
+                        rc.isPathable(myType, site) &&
                         siteTerrainTile != TerrainTile.OFF_MAP &&
                         siteTerrainTile == TerrainTile.NORMAL &&
-                        rc.senseOre(site) > 0.0){
+                        rc.senseOre(site) > 0.0 &&
+                        theirHQ.distanceSquaredTo(site) > RobotType.HQ.attackRadiusSquared+1){
                     likelyMineSites.add(site);
                     numOfPossibleSites++;
                 }
             }
 
+            // If we have possible sites, sort them by ore and then check for adjacent miners.
             if (numOfPossibleSites > 0) {
                 MapLocation[] possibleMineSites = likelyMineSites.toArray(new MapLocation[likelyMineSites.size()]);
 
@@ -1036,9 +1061,7 @@ public class RobotPlayer {
                         return Double.compare(ore2, ore1); //descending ORE-der... heh heh heh
                     }
                 });
-
-                //System.out.println("#"+possibleMineSites.length+" 0th: "+rc.senseOre(possibleMineSites[0])+" @ "+possibleMineSites[0].toString());
-
+                if(debug)System.out.println("#"+possibleMineSites.length+" 0th: "+rc.senseOre(possibleMineSites[0])+" @ "+possibleMineSites[0].toString());
 
                 int numAdjacentMiners = 0;
                 double siteOre;
@@ -1047,23 +1070,21 @@ public class RobotPlayer {
 
                 //Get robots in the 5x5 square we are observing
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(8, myTeam);
-                //System.out.println("##"+possibleMineSites.length+" nearbyRobots: "+nearbyRobots.length);
+                if(debug)System.out.println("##"+possibleMineSites.length+" nearbyRobots: "+nearbyRobots.length);
                 //Check possibleMineSites for adjacencies to other miners
                 for (int i =0; i < possibleMineSites.length; i++) {
                     MapLocation site = possibleMineSites[i];
-                    //int nextIndex = i;
-                    //if (i != possibleMineSites.length -1) nextIndex = i+1;
                     numAdjacentMiners = 0;
-                    //System.out.println("###"+possibleMineSites.length+" ith "+possibleMineSites[i].toString()+" nearbyRobots: "+nearbyRobots.length);
+                    if(debug)System.out.println("###"+possibleMineSites.length+" ith "+possibleMineSites[i].toString()+" nearbyRobots: "+nearbyRobots.length);
 
                     for (int j = 0; j < nearbyRobots.length; j++) {
-                        //System.out.println("####MINER: site: "+site.toString() + " Robot: "+nearbyRobots[j].location.toString());
+                        if(debug)System.out.println("####MINER: site: "+site.toString() + " Robot: "+nearbyRobots[j].location.toString());
                         if (nearbyRobots[j].type == RobotType.MINER
                                 && site.distanceSquaredTo(nearbyRobots[j].location) <= 2) {
-                            //Another miner is too close
+                            // Another miner is too close
                             numAdjacentMiners++;
                             if (numAdjacentMiners >= 2) {
-                                //System.out.println("#####MINER: Too many adjacent miners for site "+site.toString());
+                                if(debug)System.out.println("#####MINER: Too many adjacent miners for site "+site.toString());
                                 site = null;
                                 break;
                             }
@@ -1074,27 +1095,53 @@ public class RobotPlayer {
                         siteWeight = siteOre - 0.25*numAdjacentMiners;
                         siteDir = myLocation.directionTo(site);
                         double roll = rand.nextDouble();
-                        //System.out.println("MINER: rolled "+roll+" against "+siteWeight+" for Dir-"+siteDir.toString());
+                        if(debug)System.out.println("MINER: rolled "+roll+" against "+siteWeight+" for Dir-"+siteDir.toString());
                         if (roll < siteWeight && rc.isCoreReady() && rc.canMove(siteDir)){
                             rc.move(siteDir);
                             return;
                         }
                     }
                 }//end possibleMineSites
-                if (rand.nextDouble() < 0.5) {
-                    moveToRallyPoint();
-                } else {
-                    moveOptimally(getDirectionsAway(this.myHQ));
-                }
+                wideSearchForOre();
             } else {
-                //System.out.println("MINER: No ore nearby. Bytecode Remaining: "+Clock.getBytecodesLeft());
-                if (rand.nextDouble() < 0.5) {
-                    moveToRallyPoint();
-                } else {
-                    moveOptimally(getDirectionsAway(this.myHQ));
+                wideSearchForOre();
+            }
+
+        }
+        
+        public void wideSearchForOre() throws GameActionException {
+            boolean debug = false;
+            if (debug)System.out.println("WIDESEARCH: Bytecode Remaining: "+Clock.getBytecodesLeft()+" on round "+Clock.getRoundNum());
+            MapLocation myLocation = rc.getLocation();
+            MapLocation[] bigSearch = MapLocation.getAllMapLocationsWithinRadiusSq(myLocation, 100);
+            
+            double maxOre = 0;
+            double possibleMineSiteOreValue = 0;
+            MapLocation bestMineSite = null;
+            for (MapLocation possibleMineSite : bigSearch){                
+                if (rc.canSenseLocation(possibleMineSite)){
+                    possibleMineSiteOreValue = rc.senseOre(possibleMineSite); 
+                    if (possibleMineSiteOreValue > 0.99){
+                        if (possibleMineSiteOreValue > maxOre) {
+                            bestMineSite = possibleMineSite;
+                            maxOre = possibleMineSiteOreValue;
+                        }
+                        if (Clock.getBytecodesLeft() <= 800 && bestMineSite != null){
+                            if(debug)System.out.println("WSFOUND: Bytecode Remaining: "+Clock.getBytecodesLeft()+" moving to "+bestMineSite.toString());
+                            goToLocation(bestMineSite);
+                            return;
+                        }
+                    }
                 }
             }
 
+            // Failed, move randomly
+            if(debug)System.out.println("WSFAILED: Bytecode Remaining: "+Clock.getBytecodesLeft()+" on round "+Clock.getRoundNum());
+            if (rand.nextDouble() < 0.5) {
+                moveToRallyPoint();
+            } else {
+                moveOptimally(getDirectionsAway(this.myHQ));
+            }
         }
         
         public Direction[] breakdownDirection(Direction direction) {
@@ -1353,9 +1400,12 @@ public class RobotPlayer {
                 
                 if (currentAmount < desiredAmount && nextRoundToBuild != 0) {
                     if (round > nextRoundToBuild && typeInt != intQueuedType) {
-                        //TODO We need to check if we are currently building it...
-                        System.out.println("Warning: round > nextRoundToBuild && not queued >> " + type.name());
+                        // It's not in the queue
                         return 1.0;
+                    }
+                    if (round > nextRoundToBuild && typeInt == intQueuedType) {
+                        // It's in the queue
+                        return 0.0;
                     }
                     if (round == nextRoundToBuild) {
                         return 1.0;
@@ -1365,6 +1415,19 @@ public class RobotPlayer {
                     }
                     System.out.println("ERROR: Unexpected return path in getWeightOfRobotType " + type.name());
                     return weight;
+                } else if(currentAmount >= desiredAmount && currentAmount <= 4*desiredAmount && rc.getTeamOre() > 600) {
+                    int strategy = rc.readBroadcast(smuIndices.STRATEGY);
+                    if (strategy == smuConstants.STRATEGY_DRONE_CONTAIN) {
+                        if (type == RobotType.HELIPAD || (type == RobotType.SUPPLYDEPOT && currentAmount <= 2*desiredAmount)){
+                            return 1.0;
+                        }
+                    } else if (strategy == smuConstants.STRATEGY_TANKS_AND_SOLDIERS) {
+                        if ( (type == RobotType.BARRACKS && currentAmount <= 2*rc.readBroadcast(smuIndices.channel[RobotTypeToInt(RobotType.TANKFACTORY)]+0)) || 
+                                (type == RobotType.TANKFACTORY && currentAmount <= 2*rc.readBroadcast(smuIndices.channel[RobotTypeToInt(RobotType.BARRACKS)]+0)) || 
+                                (type == RobotType.SUPPLYDEPOT && currentAmount <= 2*desiredAmount) ){
+                        return 1.0;
+                        }
+                    }
                 } else {
                     return 0;
                 }
@@ -1744,7 +1807,7 @@ public class RobotPlayer {
 //                strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
                 strategySUPPLYDEPOT = new int[] {1000, 1400, 1500};
                 strategyTANK = new int[] {20, 1100, 1800};
-                strategyTANKFACTORY = new int[] {1000, 1200};
+                strategyTANKFACTORY = new int[] {400, 800};
                 strategyTECHNOLOGYINSTITUTE = new int[] {0};
                 strategyTOWER = new int[] {0};
                 strategyTRAININGFIELD = new int[] {0};
@@ -1752,7 +1815,7 @@ public class RobotPlayer {
                 System.out.println("COMPUTE STRATEGY: Drone Contain");
                 strategyAEROSPACELAB = new int[] {0};
                 strategyBARRACKS = new int[] {0};
-                strategyBASHER = new int[] {0, 1200, 1700};
+                strategyBASHER = new int[] {0, 0, 0};
                 strategyBEAVER = new int[] {10, 0, 100};
                 strategyCOMMANDER = new int[] {0, 0, 0};
                 strategyCOMPUTER = new int[] {0, 0, 0};
@@ -1760,13 +1823,13 @@ public class RobotPlayer {
                 strategyHANDWASHSTATION = new int[] {1850, 1860, 1870};
                 strategyHELIPAD = new int[] {1, 300};
                 strategyHQ = new int[] {0};
-                strategyLAUNCHER = new int[] {0, 1100, 1700};
+                strategyLAUNCHER = new int[] {0, 0, 0};
                 strategyMINER = new int[] {20, 100, 500};
                 strategyMINERFACTORY = new int[] {100, 500};
                 strategyMISSILE = new int[] {0, 0, 0};
-                strategySOLDIER = new int[] {0, 200, 1200};
+                strategySOLDIER = new int[] {0, 0, 0};
                 strategySUPPLYDEPOT = new int[] {700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
-                strategyTANK = new int[] {0, 1100, 1800};
+                strategyTANK = new int[] {0, 0, 0};
                 strategyTANKFACTORY = new int[] {0};
                 strategyTECHNOLOGYINSTITUTE = new int[] {0};
                 strategyTOWER = new int[] {0};
