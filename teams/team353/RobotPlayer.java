@@ -54,6 +54,10 @@ public class RobotPlayer {
 		public static int RALLY_POINT_X = 0;
 		public static int RALLY_POINT_Y = 1;
 		
+		public static int TOWER_SOS_X = 2;
+		public static int TOWER_SOS_Y = 3;
+		public static int TOWER_SOS_ROUND_SENT = 4;
+		
 		//Economy
 		public static int freqQueue = 11;
 
@@ -166,6 +170,7 @@ public class RobotPlayer {
         protected int myRange;
         protected RobotType myType;
         static Random rand;
+        protected double shouldProtectTower;
         
         public BaseBot(RobotController rc) {
             this.rc = rc;
@@ -176,8 +181,20 @@ public class RobotPlayer {
             this.myType = rc.getType();
             this.myRange = myType.attackRadiusSquared;
             rand = new Random(rc.getID());
+            shouldProtectTower = rand.nextDouble();
         }
 
+        public void defendTowerSOS() throws GameActionException {
+        	if (shouldProtectTower > 0.5) return;
+        	
+        	int towerX = rc.readBroadcast(smuIndices.TOWER_SOS_X);
+        	int towerY = rc.readBroadcast(smuIndices.TOWER_SOS_Y);
+        	
+        	if (towerX != 0 && towerY != 0) {
+        		goToLocation(new MapLocation(towerX, towerY));
+        	}
+        }
+        
         public int getDistanceSquared(MapLocation A, MapLocation B){
             return (A.x - B.x)*(A.x - B.x) + (A.y - B.y)*(A.y - B.y);
         }
@@ -1586,6 +1603,15 @@ public class RobotPlayer {
             computeHoles();
         }
     	
+    	// For dead towers
+    	public void resetSOS() throws GameActionException {
+    		int roundSOSSent = rc.readBroadcast(smuIndices.TOWER_SOS_ROUND_SENT);
+    		if (roundSOSSent + 3 > Clock.getRoundNum()) {
+    			rc.broadcast(smuIndices.TOWER_SOS_X, 0);
+    			rc.broadcast(smuIndices.TOWER_SOS_Y, 0);
+    		}
+    	}
+    	
     	public void analyzePreviousMatch() {
     		long[] prevGameTeamMemory = rc.getTeamMemory();
     		boolean hasData = false;
@@ -1912,6 +1938,7 @@ public class RobotPlayer {
             spawnOptimally();
             setRallyPoint();
             attackLeastHealthEnemyInRange();
+            resetSOS();
             transferSupplies();
             
             if (!isFinishedAnalyzing) {
@@ -2029,6 +2056,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
           	fleeMissile();
+        	defendTowerSOS();
         	if (!defend()) {
           		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
           			contain();
@@ -2066,7 +2094,8 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
         	fleeMissile();
-            if (!defend()) {
+        	defendTowerSOS();
+        	if (!defend()) {
           		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
           			contain();
           		} else {
@@ -2086,6 +2115,7 @@ public class RobotPlayer {
 
         public void execute() throws GameActionException {
         	fleeMissile();
+        	defendTowerSOS();
         	if (!defendSelf()) {
         		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
         			contain();
@@ -2100,11 +2130,41 @@ public class RobotPlayer {
 
     //TOWER
     public static class Tower extends BaseBot {
-        public Tower(RobotController rc) {
+        
+    	public double healthLastRound;
+    	public int lastRoundLostHealth = 0;
+    	
+    	public Tower(RobotController rc) {
             super(rc);
+            healthLastRound = rc.getHealth();
         }
 
+        public void handleSOS() throws GameActionException {
+        	double currentHealth = rc.getHealth();
+        	int currRound = Clock.getRoundNum();
+        	int towerX = rc.readBroadcast(smuIndices.TOWER_SOS_X);
+        	int towerY = rc.readBroadcast(smuIndices.TOWER_SOS_Y);
+        	MapLocation towerSOSing = null;
+        	if (towerX != 0 && towerY != 0) {
+        		towerSOSing = new MapLocation(towerX, towerY);
+        	}
+        	MapLocation myLocation = rc.getLocation();
+        	if ((towerX == 0 && towerY == 0) || towerSOSing == myLocation) {
+        		if (currentHealth < healthLastRound) {
+        			rc.broadcast(smuIndices.TOWER_SOS_X, myLocation.x);
+        			rc.broadcast(smuIndices.TOWER_SOS_Y, myLocation.y);
+        			rc.broadcast(smuIndices.TOWER_SOS_ROUND_SENT, currRound);
+        		} else if (lastRoundLostHealth + 2 < currRound) {
+        			rc.broadcast(smuIndices.TOWER_SOS_X, 0);
+        			rc.broadcast(smuIndices.TOWER_SOS_Y, 0);
+        			rc.broadcast(smuIndices.TOWER_SOS_ROUND_SENT, 0);
+        		}
+        	}
+        	healthLastRound = currentHealth;
+        }
+        
         public void execute() throws GameActionException {
+        	handleSOS();
         	transferSupplies();
             attackLeastHealthEnemyInRange();
             rc.yield();
