@@ -405,6 +405,31 @@ public class RobotPlayer {
             return rallyPoint;
         }
 
+        public void moveOptimally(Direction currentDirection) throws GameActionException {
+            //TODO check safety
+            if (currentDirection != null) {
+                MapLocation tileInFront = rc.getLocation().add(currentDirection);
+
+                //check that we are not facing off the edge of the map
+                TerrainTile terrainTileInFront = rc.senseTerrainTile(tileInFront);
+                if(!isLocationSafe(tileInFront) || 
+                        !rc.isPathable(myType, tileInFront) ||
+                        terrainTileInFront == TerrainTile.OFF_MAP ||
+                        (myType != RobotType.DRONE && terrainTileInFront!=TerrainTile.NORMAL)){
+                    return;
+
+                }else{
+                    //try to move in the currentDirection direction
+                    if(currentDirection != null && rc.isCoreReady() && rc.canMove(currentDirection)){
+                        rc.move(currentDirection);
+                        return;
+                    }
+                }
+
+            }
+
+        }
+        
         //Moves a random safe direction from input array
         public void moveOptimally(Direction[] optimalDirections) throws GameActionException {
             //TODO check safety
@@ -412,23 +437,13 @@ public class RobotPlayer {
                 boolean lookingForDirection = true;
                 int attemptForDirection = 0;
                 while(lookingForDirection){
-                    MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
                     Direction currentDirection = optimalDirections[attemptForDirection];
                     //Direction currentDirection = optimalDirections[(int) (rand.nextDouble()*optimalDirections.length)];
                     MapLocation tileInFront = rc.getLocation().add(currentDirection);
 
-                    //check that the direction in front is not a tile that can be attacked by the enemy towers
-                    boolean tileInFrontSafe = true;
-                    for(MapLocation m: enemyTowers){
-                        if(m.distanceSquaredTo(tileInFront)<=RobotType.TOWER.attackRadiusSquared+1){
-                            tileInFrontSafe = false;
-                            break;
-                        }
-                    }
-
                     //check that we are not facing off the edge of the map
                     TerrainTile terrainTileInFront = rc.senseTerrainTile(tileInFront);
-                    if(!tileInFrontSafe || 
+                    if(!isLocationSafe(tileInFront) || 
                             !rc.isPathable(myType, tileInFront) ||
                             terrainTileInFront == TerrainTile.OFF_MAP ||
                             (myType != RobotType.DRONE && terrainTileInFront!=TerrainTile.NORMAL)){
@@ -1000,24 +1015,14 @@ public class RobotPlayer {
                     Direction.SOUTH, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.WEST};
             List<MapLocation> likelyMineSites = new ArrayList<MapLocation>();
             int numOfPossibleSites = 0;
-            
-            MapLocation[] enemyTowers = rc.senseEnemyTowerLocations();
 
             //Check all directions for safety, validity, and ore
             for (Direction dir : arrayOfDirections){
                 MapLocation site = myLocation.add(dir);
                 TerrainTile siteTerrainTile = rc.senseTerrainTile(site);
 
-                //check that the direction in front is not a tile that can be attacked by the enemy towers
-                boolean tileInFrontSafe = true;
-                for(MapLocation m: enemyTowers){
-                    if(m.distanceSquaredTo(site)<=RobotType.TOWER.attackRadiusSquared+1){
-                        tileInFrontSafe = false;
-                        break;
-                    }
-                }
 
-                if(tileInFrontSafe &&
+                if(isLocationSafe(site) &&
                         rc.isPathable(myType, site) &&
                         siteTerrainTile != TerrainTile.OFF_MAP &&
                         siteTerrainTile == TerrainTile.NORMAL &&
