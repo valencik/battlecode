@@ -384,11 +384,14 @@ public class RobotPlayer {
 
                     moveOptimally(getDirectionsToward(rallyPoint));
                 } else {
-                  Direction newDir = getMoveDir(rallyPoint);
-                  
-                  if (newDir != null && rc.canMove(newDir)) {
-                      rc.move(newDir);
-                  }                    
+                  if (rc.getLocation().distanceSquaredTo(rallyPoint) > 40){
+                      moveOptimally(getDirectionsToward(rallyPoint));
+                  } else {
+                      Direction newDir = getMoveDir(rallyPoint);
+                      if (newDir != null && rc.canMove(newDir)) {
+                          rc.move(newDir);
+                      }       
+                  }
                 }
             }
 
