@@ -381,6 +381,23 @@ public class RobotPlayer {
             }
         }
         
+        public void fleeMissile() throws GameActionException {
+        	RobotInfo[] enemies = rc.senseNearbyRobots(myType.sensorRadiusSquared, theirTeam);
+        	for (RobotInfo enemy : enemies) {
+        		if (enemy.type == RobotType.MISSILE) {
+        			Direction enemyDir = rc.getLocation().directionTo(enemy.location);
+        			Direction moveDir = enemyDir.opposite();
+        			for(int i = 0; i<8; i++) {
+        				if (rc.canMove(moveDir) && !moveDir.equals(enemyDir)) {
+        					rc.move(moveDir);
+        					break;
+        				}
+        				moveDir = moveDir.rotateLeft();
+        			}
+        		}
+        	}
+        }
+        
         public void moveToRallyPoint() throws GameActionException {
             if (rc.isCoreReady()) {
                 int rallyX = rc.readBroadcast(smuIndices.RALLY_POINT_X);
@@ -1431,7 +1448,6 @@ public class RobotPlayer {
         public int xMin, xMax, yMin, yMax;
         public int xpos, ypos;
         public int totalNormal, totalVoid, totalProcessed;
-        public int towerThreat;
 
         public static double ratio;
         public boolean isFinishedAnalyzing = false;
@@ -1461,7 +1477,6 @@ public class RobotPlayer {
             ypos = yMin;
             
             totalNormal = totalVoid = totalProcessed = 0;
-            towerThreat = 0;
             isFinishedAnalyzing = false;
             try {
 	            computeStrategy();
@@ -1559,24 +1574,6 @@ public class RobotPlayer {
             }
             ratio = (double) totalNormal / totalProcessed;
             isFinishedAnalyzing = true;
-        }
-    	
-        public void analyzeTowers() {
-            MapLocation[] towers = rc.senseEnemyTowerLocations();
-            towerThreat = 0;
-
-            for (int i=0; i<towers.length; ++i) {
-                MapLocation towerLoc = towers[i];
-
-                if ((xMin <= towerLoc.x && towerLoc.x <= xMax && yMin <= towerLoc.y && towerLoc.y <= yMax) || towerLoc.distanceSquaredTo(this.theirHQ) <= 50) {
-                    for (int j=0; j<towers.length; ++j) {
-                        if (towers[j].distanceSquaredTo(towerLoc) <= 50) {
-                            towerThreat++;
-                        }
-                    }
-                }
-            }
-            analyzedTowers = true;
         }
 
         public void chooseStrategy() throws GameActionException {
@@ -1712,9 +1709,6 @@ public class RobotPlayer {
         public void saveTeamMemory() {
         	long[] teamMemory = rc.getTeamMemory();;
         	int currRound = Clock.getRoundNum();
-        	if (analyzedTowers && teamMemory[smuTeamMemoryIndices.PREV_MAP_TOWER_THREAT] == 0) {
-        		rc.setTeamMemory(smuTeamMemoryIndices.PREV_MAP_TOWER_THREAT, towerThreat);;
-        	}
         	if (isFinishedAnalyzing && teamMemory[smuTeamMemoryIndices.PREV_MAP_VOID_TYPE_PERCENT] == 0) {
         		rc.setTeamMemory(smuTeamMemoryIndices.PREV_MAP_VOID_TYPE_PERCENT, (long) (ratio * 100));
         	}
@@ -1822,9 +1816,6 @@ public class RobotPlayer {
             
             if (!isFinishedAnalyzing) {
             	analyzeMap();
-            	if (!analyzedTowers) {
-            		analyzeTowers();
-            	}
             } else {
             	if (!analyzedPrevMatch) analyzePreviousMatch();
             	chooseStrategy();
@@ -1855,6 +1846,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
+        	fleeMissile();
         	if (secondBase != null && rc.getLocation().distanceSquaredTo(secondBase) > 6) {
         		goToLocation(secondBase);
         	}
@@ -1945,7 +1937,8 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
-          	if (!defend()) {
+          	fleeMissile();
+        	if (!defend()) {
           		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
           			contain();
           		} else {
@@ -1981,6 +1974,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
+        	fleeMissile();
             if (!defend()) {
           		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
           			contain();
@@ -2000,6 +1994,7 @@ public class RobotPlayer {
         }
 
         public void execute() throws GameActionException {
+        	fleeMissile();
         	if (!defendSelf()) {
         		if (Clock.getRoundNum() < smuConstants.roundToLaunchAttack) {
         			contain();
